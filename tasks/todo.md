@@ -102,8 +102,10 @@ Demo data reset afterwards: 0 guestbook rows, 0 song rows, 0 non-pending guests.
 **Admin (`/admin`)**
 - [x] `lib/auth.ts` — HMAC-signed httpOnly session cookie, constant-time compares,
       fails closed on missing/short secret or unset password
-- [x] `middleware.ts` — prefix gate over `/admin/*` and `/api/admin/*`; pages
-      redirect, APIs 401
+- [x] `proxy.ts` (Next 16 rename of middleware) — prefix pre-filter over
+      `/admin/*` and `/api/admin/*`; pages redirect, APIs 401
+- [x] `lib/admin-session.ts` — per-route re-verification, so the proxy is never
+      the only guard (per Next's authentication guidance)
 - [x] Dashboard: RSVP stat tiles, guest search, guestbook queue
       (approve / unpublish / delete), seating with over-capacity warnings
 - [x] Admin APIs: login, logout, guests, guestbook, invites

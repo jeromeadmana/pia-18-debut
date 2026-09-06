@@ -11,7 +11,7 @@ import { clientKey, rateLimit } from "@/lib/rate-limit";
 /**
  * POST /api/admin/login
  *
- * This is the one endpoint `middleware.ts` lets through unauthenticated, so it
+ * This is the one endpoint `proxy.ts` lets through unauthenticated, so it
  * is the only brute-force surface on the admin side. Five attempts per fifteen
  * minutes makes guessing a decent password impractical while never getting in
  * the way of an operator who fat-fingered it twice.

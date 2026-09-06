@@ -255,8 +255,9 @@ export async function searchGuestsByName(query: string, limit = 20) {
 /* ADMIN                                                                       */
 /*                                                                             */
 /* Everything below exposes guest PII and must only ever be reached through a   */
-/* route under /admin or /api/admin, which `middleware.ts` gates. None of it     */
-/* may be imported into a public page.                                          */
+/* route under /admin or /api/admin. Those are pre-filtered by `proxy.ts` and    */
+/* re-verified per route via lib/admin-session. None of it may be imported into  */
+/* a public page.                                                               */
 /* -------------------------------------------------------------------------- */
 
 /** Headline RSVP numbers. One grouped scan, not five count queries. */

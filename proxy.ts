@@ -2,20 +2,26 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 /**
- * Gate every admin surface at the edge.
+ * Optimistic admin pre-filter.
  *
- * Doing this in middleware rather than per-page matters: a new admin route added
- * later is protected by default instead of protected only if someone remembered
- * the check. The matcher is deny-by-prefix, so the only way to expose something
- * under /admin is to deliberately add it to the public list below.
+ * Renamed from `middleware.ts`: Next.js 16 calls this convention Proxy, and the
+ * old filename is deprecated. Behaviour is unchanged.
  *
- * Pages redirect to the login screen; API routes get a 401 rather than an HTML
- * redirect, so a fetch from the dashboard fails cleanly.
+ * **This is a pre-filter, not the authorisation boundary.** Next's own guidance
+ * is explicit that Proxy "should not be your only line of defense" — it runs on
+ * prefetches, and a bypass here would otherwise expose the entire guest list. So
+ * every admin page and route ALSO calls `requireAdminPage` / `requireAdminApi`
+ * from `lib/admin-session.ts`, which re-verifies the cookie next to the data.
+ *
+ * What this layer buys us is a clean redirect for a human who wandered in
+ * logged-out, and one cheap central place to short-circuit unauthorised traffic
+ * before it reaches a function. It only ever reads the cookie — no database work,
+ * per the same guidance.
  */
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/api/admin/login"]);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_ADMIN_PATHS.has(pathname)) return NextResponse.next();

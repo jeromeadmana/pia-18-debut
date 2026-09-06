@@ -5,12 +5,13 @@ import {
   listSeatingTables,
 } from "@/db/queries";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { requireAdminPage } from "@/lib/admin-session";
 
 /**
  * Operator dashboard.
  *
- * Reached only through `middleware.ts`, which verifies the signed session cookie
- * before this file is ever evaluated.
+ * `proxy.ts` pre-filters anonymous traffic, and `requireAdminPage` below is the
+ * authorisation boundary proper — this page must not rely on the proxy alone.
  *
  * The initial data is loaded here on the server in one pass so the dashboard is
  * useful on first paint; the client component takes over for search and the
@@ -26,6 +27,10 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
+  // Re-verified here, not just in proxy.ts — this page reads the whole guest
+  // list, so it must not depend on an upstream filter having run.
+  await requireAdminPage();
+
   const [summary, messages, invites, tables] = await Promise.all([
     getRsvpSummary(),
     listMessagesForReview(),

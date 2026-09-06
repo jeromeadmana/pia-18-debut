@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/admin-session";
 import { z } from "zod";
 import { assignTable } from "@/db/queries";
 
 /**
  * PATCH /api/admin/invites — move a party to a table, or clear the assignment.
- * Gated by `middleware.ts`.
+ * Pre-filtered by `proxy.ts`, re-verified here via `requireAdminApi`.
  */
 export const maxDuration = 10;
 export const dynamic = "force-dynamic";
@@ -17,6 +18,11 @@ const schema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  // Defence in depth: proxy.ts already filtered this, but the
+  // authorisation boundary lives here, next to the data.
+  const denied = await requireAdminApi();
+  if (denied) return denied;
+
   let payload: unknown;
   try {
     payload = await request.json();

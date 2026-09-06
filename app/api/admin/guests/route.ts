@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/admin-session";
 import { searchGuestsByName } from "@/db/queries";
 import { isConnectionError } from "@/db/client";
 
@@ -7,12 +8,18 @@ import { isConnectionError } from "@/db/client";
  *
  * This is the endpoint that would make the entire guest list enumerable if it
  * ever escaped the admin gate. It exists ONLY under /api/admin so that
- * `middleware.ts` covers it by prefix; do not move or duplicate it elsewhere.
+ * `proxy.ts` covers it by prefix, and it re-verifies the session itself. Do not
+ * move it out from under that prefix or drop the `requireAdminApi` call.
  */
 export const maxDuration = 10;
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  // Defence in depth: proxy.ts already filtered this, but the
+  // authorisation boundary lives here, next to the data.
+  const denied = await requireAdminApi();
+  if (denied) return denied;
+
   const query = new URL(request.url).searchParams.get("q") ?? "";
 
   // An empty query returns nothing rather than the whole table — the operator

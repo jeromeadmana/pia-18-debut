@@ -102,10 +102,15 @@ the deadline passes the RSVP form is replaced by a summary of what was recorded.
 
 ### Admin
 
-`/admin` is gated by `middleware.ts`, which matches `/admin/*` and
-`/api/admin/*` by prefix — a new admin route is protected by default. Auth is
-one shared password exchanged for an HMAC-signed httpOnly cookie holding only
-an expiry and its signature.
+`/admin` is gated in two independent places. `proxy.ts` (Next 16's rename of
+middleware) pre-filters `/admin/*` and `/api/admin/*` by prefix, so a new admin
+route is covered by default. Every admin page and route handler then re-verifies
+the session through `lib/admin-session.ts`, next to the data — Next's own
+guidance is that Proxy "should not be your only line of defense", since it also
+runs on prefetches.
+
+Auth is one shared password exchanged for an HMAC-signed httpOnly cookie holding
+only an expiry and its signature.
 
 `searchGuestsByName` lives behind this gate for a reason: exposed publicly it
 would make the whole guest list enumerable, defeating the invite-code design.

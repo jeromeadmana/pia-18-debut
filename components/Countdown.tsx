@@ -9,6 +9,9 @@ import { useSyncExternalStore } from "react";
  * matters because this is the one element on the page that wants to update every
  * second.
  *
+ * Uses the semantic colour tokens, so it reads correctly on the obsidian hero
+ * and on any ivory section it might later be reused in.
+ *
  * Built on `useSyncExternalStore` rather than `useEffect` + `setState`. The clock
  * genuinely IS an external store, and this hook is the sanctioned way to read one
  * without cascading renders. It also solves hydration properly: React uses
@@ -84,7 +87,7 @@ export function Countdown({ targetIso }: { targetIso: string }) {
 
   if (!remaining) {
     return (
-      <p className="font-display text-2xl italic text-burgundy">
+      <p className="font-display text-2xl italic text-foreground">
         Tonight, we celebrate.
       </p>
     );
@@ -107,10 +110,10 @@ export function Countdown({ targetIso }: { targetIso: string }) {
     >
       {units.map(([value, label]) => (
         <div key={label} className="min-w-14 text-center">
-          <div className="font-display text-4xl font-light tabular-nums text-burgundy sm:text-5xl">
+          <div className="font-display text-4xl font-extralight tabular-nums text-foreground sm:text-5xl">
             {String(value).padStart(2, "0")}
           </div>
-          <div className="mt-1 text-[0.65rem] uppercase tracking-engraved text-ink-muted">
+          <div className="mt-1 text-[0.6rem] uppercase tracking-editorial text-muted">
             {label}
           </div>
         </div>

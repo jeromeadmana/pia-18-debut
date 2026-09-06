@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { event } from "@/content/event.config";
-import { Countdown } from "@/components/Countdown";
 import { resolveImage } from "@/lib/cloudinary";
 import { Guestbook } from "@/components/Guestbook";
-import { getEventPhase, isRsvpClosed, type EventPhase } from "@/lib/phase";
+import { LuxuryHero } from "@/components/hero/LuxuryHero";
+import { MotionProvider } from "@/components/motion/MotionProvider";
+import { getEventPhase, isRsvpClosed } from "@/lib/phase";
 import { hasVenueMap, venueAddress, venueName } from "@/lib/content";
 
 /**
@@ -32,7 +33,17 @@ export default function HomePage() {
   return (
     <main className="flex-1">
       {phase === "event-day" && <TonightBanner />}
-      <Hero phase={phase} rsvpClosed={rsvpClosed} />
+
+      {/* MotionProvider is scoped to the hero rather than placed in the root
+          layout: /live must stay motion-free, and a layout-level provider would
+          ship the animation bundle to it. */}
+      <MotionProvider>
+        <LuxuryHero
+          phase={phase}
+          rsvpClosed={rsvpClosed}
+          cover={resolveImage(event.gallery[0])}
+        />
+      </MotionProvider>
       {phase === "past" && <ThankYou />}
       <Program />
       <Details />
@@ -71,83 +82,6 @@ function ThankYou() {
           Thank you for celebrating {event.celebrant.firstName}&apos;s eighteenth
           with her. The photographs and every wish left here are hers to keep.
         </p>
-      </div>
-    </section>
-  );
-}
-
-function Hero({ phase, rsvpClosed }: { phase: EventPhase; rsvpClosed: boolean }) {
-  const cover = resolveImage(event.gallery[0]);
-
-  return (
-    <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 text-center">
-      <Image
-        {...cover}
-        alt=""
-        aria-hidden
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover opacity-20"
-      />
-      {/* Wash the photo back so the type stays legible over any crop. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-ivory/80 via-ivory/60 to-ivory" />
-
-      <div className="relative z-10 flex flex-col items-center gap-8">
-        <p className="text-xs uppercase tracking-engraved text-ink-muted">
-          {event.date.displayDate} &middot; {event.date.displayYear}
-        </p>
-
-        <h1 className="font-display text-6xl font-light leading-none text-burgundy sm:text-8xl">
-          {event.celebrant.firstName}
-        </h1>
-
-        <div className="flex items-center gap-4">
-          <span className="h-px w-12 bg-accent/40" />
-          <p className="font-display text-lg italic text-ink-muted">
-            {event.celebrant.tagline}
-          </p>
-          <span className="h-px w-12 bg-accent/40" />
-        </div>
-
-        {phase !== "past" && <Countdown targetIso={event.date.iso} />}
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          {/* The primary action changes with the moment: reply, then find your
-              table on the night, then look back at the photographs. */}
-          {phase === "past" ? (
-            <Link
-              href="#gallery"
-              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
-            >
-              View the photographs
-            </Link>
-          ) : phase === "event-day" ? (
-            <Link
-              href="/live"
-              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
-            >
-              Tonight&apos;s programme
-            </Link>
-          ) : rsvpClosed ? (
-            <span className="rounded-full border border-hairline px-8 py-3 text-sm uppercase tracking-engraved text-ink-muted">
-              Replies are closed
-            </span>
-          ) : (
-            <Link
-              href="/rsvp"
-              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
-            >
-              Confirm RSVP
-            </Link>
-          )}
-          <Link
-            href="#program"
-            className="rounded-full border border-accent/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
-          >
-            Dress Code &amp; Program
-          </Link>
-        </div>
       </div>
     </section>
   );

@@ -114,3 +114,34 @@ Then verify the *other* ports you did not intend to touch are still up.
 in the same step that created them (statuses to `pending`, `responded_at` to
 null, delete created songs/messages) and print the counts as proof. Leaving a
 demo invite in a half-answered state makes the next person's test lie to them.
+
+---
+
+### 10. A negated .gitignore rule needs a real test, not `git check-ignore`
+
+**Anti-pattern:** Adding `!.env.example` under `.env*` and then running
+`git check-ignore -v .env.example` to confirm it worked. That command prints the
+*last matching pattern* and its exit code does not mean what it looks like here,
+so it reported "still ignored" for a file that was in fact trackable.
+
+**Rule:** Test tracking status the way git actually decides it:
+
+```bash
+git ls-files --others --exclude-standard | grep -x ".env.example"   # should appear
+git ls-files --others --exclude-standard | grep -x ".env.local"     # must NOT appear
+```
+
+Always assert both directions — that the template is visible *and* that the real
+secret file is still hidden.
+
+---
+
+### 11. Adding a `cp .env.example .env.local` step can destroy credentials
+
+**Anti-pattern:** README setup that ran `neon link` (which writes `.env.local`)
+and then told the reader to `cp .env.example .env.local`, silently wiping the
+database credentials that had just been fetched.
+
+**Rule:** When a tool generates a dotfile, later steps must **append** to it, not
+overwrite it. Read setup instructions in order, as a new contributor would, and
+ask what each step does to the state left by the previous one.

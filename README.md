@@ -21,9 +21,20 @@ neon link --project-id proud-violet-47036262 --branch production \
 `neon link` writes `DATABASE_URL`, `DATABASE_URL_UNPOOLED` and `NEON_BRANCH`
 into `.env.local`, which is gitignored. There is no separate `env pull` step.
 
+Then **append** the two admin values to that same `.env.local` — do not copy
+`.env.example` over it, that would wipe the Neon credentials:
+
 ```bash
-pnpm db:migrate           # apply schema
-pnpm db:seed              # demo invites — safe to re-run
+node -e "console.log('ADMIN_SESSION_SECRET='+require('crypto').randomBytes(32).toString('hex'))" >> .env.local
+echo "ADMIN_PASSWORD=pick-something-memorable" >> .env.local
+```
+
+Both fail closed when unset: `/admin` locks everyone out rather than letting
+anyone in. See `.env.example` for the full list of keys.
+
+```bash
+pnpm db:migrate   # apply schema
+pnpm db:seed      # demo invites — safe to re-run
 pnpm dev
 ```
 
@@ -63,11 +74,15 @@ be used to probe which codes exist.
 
 | Surface | Strategy |
 |---|---|
-| `/`, `/rsvp` | Static — zero DB, zero functions |
+| `/rsvp`, `/live`, `/admin/login` | Static — zero DB, zero functions |
+| `/` | ISR, 15 min — reads the event phase, so it cannot be built once |
 | `/court` | ISR, 5 min — one render serves every guest |
-| Countdown | Client-side — never a server call |
-| `/i/[code]` | Dynamic, one indexed round trip |
+| Countdown, live programme | Client-side — never a server call |
+| `/i/[code]`, `/admin` | Dynamic, indexed round trips |
 | `/api/*` | Route handlers, `maxDuration = 10` |
+
+`/live` is the page guaranteed to spike on the night, and it is deliberately
+the page that touches nothing: static HTML plus a client-side clock.
 
 Measured: warm lookup ~300 ms; ~9.3 s of headroom on the first request.
 
@@ -77,6 +92,27 @@ Measured: warm lookup ~300 ms; ~9.3 s of headroom on the first request.
    Multi-statement writes use `db.batch([...])` — one atomic round trip.
 2. **`withRetry` is for reads only.** A write that timed out may have landed.
    Write idempotency comes from unique constraints instead.
+
+### The event has four phases
+
+`lib/phase.ts` derives **countdown → final-week → event-day → past** from
+`event.date.iso`, so nothing needs switching on by hand. The home page
+revalidates every 15 minutes and changes its primary action accordingly; once
+the deadline passes the RSVP form is replaced by a summary of what was recorded.
+
+### Admin
+
+`/admin` is gated by `middleware.ts`, which matches `/admin/*` and
+`/api/admin/*` by prefix — a new admin route is protected by default. Auth is
+one shared password exchanged for an HMAC-signed httpOnly cookie holding only
+an expiry and its signature.
+
+`searchGuestsByName` lives behind this gate for a reason: exposed publicly it
+would make the whole guest list enumerable, defeating the invite-code design.
+
+Rate limiting (`lib/rate-limit.ts`) is **per-instance and best-effort** —
+Vercel isolates share no memory. It stops double-tapped submits and retry
+loops, not a distributed attacker.
 
 ### Images
 

@@ -1,4 +1,4 @@
-# Pia 18th Debut — Passes 1–2
+# Pia 18th Debut — Passes 1–4
 
 Plan: `C:\Users\jerome\.claude\plans\typed-herding-codd.md`
 
@@ -97,16 +97,69 @@ Demo data reset afterwards: 0 guestbook rows, 0 song rows, 0 non-pending guests.
 
 ---
 
+## Passes 3–4 — complete
+
+**Admin (`/admin`)**
+- [x] `lib/auth.ts` — HMAC-signed httpOnly session cookie, constant-time compares,
+      fails closed on missing/short secret or unset password
+- [x] `middleware.ts` — prefix gate over `/admin/*` and `/api/admin/*`; pages
+      redirect, APIs 401
+- [x] Dashboard: RSVP stat tiles, guest search, guestbook queue
+      (approve / unpublish / delete), seating with over-capacity warnings
+- [x] Admin APIs: login, logout, guests, guestbook, invites
+- [x] `.env.example` committed (no values); `.gitignore` negation added so the
+      template is trackable while `.env.local` stays hidden
+
+**Event lifecycle**
+- [x] `lib/phase.ts` — countdown / final-week / event-day / past, derived from
+      the date; `isRsvpClosed` also closes once the event is past
+- [x] Home page revalidates every 15 min and swaps its primary CTA per phase;
+      post-event thank-you section
+- [x] Closed-RSVP state replaces the form with a summary of what was recorded
+- [x] `/live` — event-day programme, static, "now" computed client-side on a 30s
+      tick, no network calls after load
+
+**Rate limiting**
+- [x] `lib/rate-limit.ts` — RSVP 10/min, guestbook 5/min, admin login 5/15min.
+      Per-instance and best-effort by construction (documented in the file).
+
+### Passes 3–4 verification — live HTTP
+
+| # | Check | Result |
+|---|---|---|
+| 1 | `/admin` unauthenticated | **307** → `/admin/login?next=/admin` |
+| 2 | `/api/admin/guests` unauthenticated | **401** |
+| 3 | `/api/admin/invites` PATCH unauthenticated | **401** |
+| 4 | Login, wrong password | **401** |
+| 5 | Login, correct password | 200 + session cookie |
+| 6 | `/api/admin/guests` with session | 200, returns matches |
+| 7 | `/admin` with session | 200, all sections render |
+| 8 | `/live` | 200, programme in server HTML |
+| 9 | **Forged cookie** (valid-looking expiry, bogus signature) | **401** |
+| 10 | Moderation round trip | hidden → approve → visible → delete |
+| 11 | Table assignment | 200; invalid table id → **400** (FK holds) |
+| 12 | Guestbook rate limit | 201×4 then **429** |
+
+Tests: **77 passed (7 files)**. Build, `tsc --noEmit`, ESLint all clean.
+Route table: `/` ISR 15m, `/live` + `/court` + `/rsvp` + `/admin/login` static,
+`/admin` + `/i/[code]` + all APIs dynamic, middleware active.
+
+Test data reset afterwards: 0 guestbook rows, 0 song rows, 0 non-pending guests,
+table assignments restored.
+
+---
+
 ## Known gaps (deliberate)
 
-- **No admin surface.** `searchGuestsByName` exists and is **not** routed
-  anywhere; it must never be exposed publicly. Guestbook approval currently
-  requires a manual SQL update or Drizzle Studio.
+- **Rate limiting is per-instance**, not global — Vercel isolates share no
+  memory. Blunts accidents and casual abuse, not a distributed attacker.
+  A shared store (Upstash/Vercel KV) would make it a real control.
 - Gallery is a masonry grid — no lightbox or carousel.
 - Only one hero treatment built (cinematic photo wash); the minimalist and
   split-gallery variations were not built.
-- No rate limiting on either write endpoint.
-- No event-day live view or post-event archive state.
+- Post-event state reuses the pre-debut gallery; there is no upload path for
+  photographs taken on the night.
+- Admin is a single shared password with no audit trail of who changed what.
 
 ---
 
@@ -120,12 +173,12 @@ Demo data reset afterwards: 0 guestbook rows, 0 song rows, 0 non-pending guests.
 - [ ] **Pin the Vercel function region near the database** (Neon is `aws-us-east-2`;
       use `iad1`). Function↔DB round trips dominate, so co-locate with Postgres,
       not with guests in Manila.
-- [ ] Add a guestbook moderation view (nothing publishes until `is_approved`)
-- [ ] Rate-limit `/api/rsvp` and `/api/guestbook`
+- [ ] Set `ADMIN_SESSION_SECRET` and `ADMIN_PASSWORD` in Vercel env vars
+      (see `.env.example`; local values are already in `.env.local`)
 
-## Next passes
+## Next up
 
-- **Pass 3** — admin dashboard (guest search, guestbook approval, table assignment),
-  rate limiting, gallery lightbox, alternate hero treatments
-- **Pass 4** — event-day live schedule view, post-event gallery / thank-you /
-  guestbook archive states
+- Gallery lightbox and an upload path for photographs taken on the night
+- Alternate hero treatments (minimalist typography, split gallery)
+- Shared-store rate limiting if the site is ever made public
+- Bulk invite import + code generation from a spreadsheet of real guests

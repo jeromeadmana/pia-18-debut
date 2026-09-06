@@ -5,6 +5,7 @@ import { Countdown } from "@/components/Countdown";
 import { resolveImage } from "@/lib/cloudinary";
 import { Guestbook } from "@/components/Guestbook";
 import { getEventPhase, isRsvpClosed, type EventPhase } from "@/lib/phase";
+import { hasVenueMap, venueAddress, venueName } from "@/lib/content";
 
 /**
  * Home page — fully static.
@@ -185,19 +186,23 @@ function Details() {
       <div className="mx-auto grid max-w-4xl gap-16 sm:grid-cols-2">
         <div>
           <SectionHeading eyebrow="Where" title="The Venue" align="left" />
-          <p className="mt-6 font-display text-2xl text-burgundy">{event.venue.name}</p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">{event.venue.address}</p>
+          <p className="mt-6 font-display text-2xl text-burgundy">{venueName()}</p>
+          {venueAddress() && (
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{venueAddress()}</p>
+          )}
           <p className="mt-4 text-sm text-ink-muted">{event.venue.parkingNote}</p>
 
           <div className="mt-6 flex gap-3">
-            <a
-              href={event.venue.mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-gold/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
-            >
-              Open in Maps
-            </a>
+            {hasVenueMap() && (
+              <a
+                href={event.venue.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-gold/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
+              >
+                Open in Maps
+              </a>
+            )}
             {event.venue.wazeUrl && (
               <a
                 href={event.venue.wazeUrl}

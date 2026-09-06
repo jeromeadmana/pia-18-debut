@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Suspense } from "react";
 
 /**
@@ -94,6 +95,14 @@ function LoginForm() {
           {submitting ? "Checking…" : "Continue"}
         </button>
       </form>
+
+      {/* Deliberately unbranded: a stray visitor should learn nothing here. */}
+      <Link
+        href="/"
+        className="mt-8 text-center text-xs uppercase tracking-wide text-ink-muted underline-offset-4 transition hover:text-burgundy hover:underline"
+      >
+        Back to the site
+      </Link>
     </main>
   );
 }

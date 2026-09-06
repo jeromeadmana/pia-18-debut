@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist } from "next/font/google";
 import { event } from "@/content/event.config";
+import { celebrantFullName } from "@/lib/content";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,10 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: `${event.celebrant.fullName} — ${event.celebrant.tagline}`,
+  // `celebrantFullName()` falls back to the first name while `fullName` is still
+  // a REPLACE_ME placeholder, so the browser tab never advertises an unfilled
+  // config value.
+  title: `${celebrantFullName()} — ${event.celebrant.tagline}`,
   description: `${event.celebrant.firstName}'s ${event.celebrant.age}th birthday debut. ${event.date.displayDate}, ${event.date.displayYear}.`,
   // Invite links are private. Keep the whole site out of search results so a
   // code can never be discovered by searching a guest's name.

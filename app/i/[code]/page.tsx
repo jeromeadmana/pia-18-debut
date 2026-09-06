@@ -3,6 +3,8 @@ import { getInviteByCode } from "@/db/queries";
 import { event } from "@/content/event.config";
 import { RsvpForm } from "@/components/RsvpForm";
 import { isRsvpClosed } from "@/lib/phase";
+import { SiteHeader } from "@/components/SiteHeader";
+import { celebrantFullName, venueName, venueAddress } from "@/lib/content";
 
 /**
  * The private invite page.
@@ -41,82 +43,88 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
   const attire = courtRoles.length > 0 ? event.attire.entourage : event.attire.guests;
 
   return (
-    <main className="mx-auto max-w-xl flex-1 px-6 py-20">
-      <header className="text-center">
-        <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
-          You are invited
-        </p>
-        <h1 className="mt-4 font-display text-4xl font-light leading-tight text-burgundy">
-          {invite.partyName}
-        </h1>
-        <p className="mt-6 text-sm leading-relaxed text-ink-muted">
-          to celebrate the {event.celebrant.age}th birthday of{" "}
-          <span className="font-display text-base italic text-burgundy">
-            {event.celebrant.fullName}
-          </span>
-        </p>
-      </header>
+    <>
+      <SiteHeader />
 
-      <dl className="mt-12 space-y-px overflow-hidden rounded-sm border border-hairline">
-        <Row label="When">
-          {event.date.displayDate}, {event.date.displayYear}
-          <span className="block text-ink-muted">{event.date.displayTime}</span>
-        </Row>
-        <Row label="Where">
-          {event.venue.name}
-          <span className="block text-ink-muted">{event.venue.address}</span>
-        </Row>
-        <Row label="Attire">
-          {attire.dressCode}
-          <span className="mt-1 block text-ink-muted">{attire.guidance}</span>
-        </Row>
-        <Row label="Your table">
-          {invite.table ? (
-            <>
-              {invite.table.name}
-              {invite.table.locationNote && (
-                <span className="block text-ink-muted">{invite.table.locationNote}</span>
-              )}
-            </>
-          ) : (
-            <span className="text-ink-muted">To be assigned closer to the date</span>
-          )}
-        </Row>
-        <Row label="Seats">
-          {invite.maxSeats} {invite.maxSeats === 1 ? "seat" : "seats"} reserved
-        </Row>
-      </dl>
-
-      {courtRoles.length > 0 && (
-        <section className="mt-10 rounded-sm border border-gold/40 bg-champagne/25 px-6 py-5 text-center">
+      <main className="mx-auto max-w-xl flex-1 px-6 py-20">
+        <header className="text-center">
           <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
-            A special role
+            You are invited
           </p>
-          {courtRoles.map((role) => (
-            <p key={`${role.category}-${role.position}`} className="mt-3 text-sm text-burgundy">
-              <span className="font-display text-lg italic">{role.guest}</span>
-              <span className="mt-1 block">
-                {ordinal(role.position)} of the {event.court[role.category].label}
-              </span>
-            </p>
-          ))}
-        </section>
-      )}
+          <h1 className="mt-4 font-display text-4xl font-light leading-tight text-burgundy">
+            {invite.partyName}
+          </h1>
+          <p className="mt-6 text-sm leading-relaxed text-ink-muted">
+            to celebrate the {event.celebrant.age}th birthday of{" "}
+            <span className="font-display text-base italic text-burgundy">
+              {celebrantFullName()}
+            </span>
+          </p>
+        </header>
 
-      <RsvpForm
-        code={invite.rsvpCode}
-        maxSeats={invite.maxSeats}
-        hasResponded={invite.respondedAt !== null}
-        rsvpClosed={isRsvpClosed()}
-        guests={invite.guests.map((guest) => ({
-          id: guest.id,
-          fullName: guest.fullName,
-          rsvpStatus: guest.rsvpStatus,
-          dietaryNotes: guest.dietaryNotes,
-        }))}
-        existingSongs={invite.songRequests}
-      />
-    </main>
+        <dl className="mt-12 space-y-px overflow-hidden rounded-sm border border-hairline">
+          <Row label="When">
+            {event.date.displayDate}, {event.date.displayYear}
+            <span className="block text-ink-muted">{event.date.displayTime}</span>
+          </Row>
+          <Row label="Where">
+            {venueName()}
+            {venueAddress() && (
+              <span className="block text-ink-muted">{venueAddress()}</span>
+            )}
+          </Row>
+          <Row label="Attire">
+            {attire.dressCode}
+            <span className="mt-1 block text-ink-muted">{attire.guidance}</span>
+          </Row>
+          <Row label="Your table">
+            {invite.table ? (
+              <>
+                {invite.table.name}
+                {invite.table.locationNote && (
+                  <span className="block text-ink-muted">{invite.table.locationNote}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-ink-muted">To be assigned closer to the date</span>
+            )}
+          </Row>
+          <Row label="Seats">
+            {invite.maxSeats} {invite.maxSeats === 1 ? "seat" : "seats"} reserved
+          </Row>
+        </dl>
+
+        {courtRoles.length > 0 && (
+          <section className="mt-10 rounded-sm border border-gold/40 bg-champagne/25 px-6 py-5 text-center">
+            <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+              A special role
+            </p>
+            {courtRoles.map((role) => (
+              <p key={`${role.category}-${role.position}`} className="mt-3 text-sm text-burgundy">
+                <span className="font-display text-lg italic">{role.guest}</span>
+                <span className="mt-1 block">
+                  {ordinal(role.position)} of the {event.court[role.category].label}
+                </span>
+              </p>
+            ))}
+          </section>
+        )}
+
+        <RsvpForm
+          code={invite.rsvpCode}
+          maxSeats={invite.maxSeats}
+          hasResponded={invite.respondedAt !== null}
+          rsvpClosed={isRsvpClosed()}
+          guests={invite.guests.map((guest) => ({
+            id: guest.id,
+            fullName: guest.fullName,
+            rsvpStatus: guest.rsvpStatus,
+            dietaryNotes: guest.dietaryNotes,
+          }))}
+          existingSongs={invite.songRequests}
+        />
+      </main>
+    </>
   );
 }
 

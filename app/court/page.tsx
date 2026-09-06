@@ -1,6 +1,7 @@
 import { listCourt } from "@/db/queries";
 import { event, type CourtCategory } from "@/content/event.config";
 import { CourtTabs } from "@/components/CourtTabs";
+import { SiteHeader } from "@/components/SiteHeader";
 
 /**
  * The 18s Court — public, and cached.
@@ -29,21 +30,25 @@ export default async function CourtPage() {
   );
 
   return (
-    <main className="mx-auto max-w-3xl flex-1 px-6 py-24">
-      <header className="text-center">
-        <p className="text-[0.65rem] uppercase tracking-engraved text-gold">Her Court</p>
-        <h1 className="mt-3 font-display text-5xl font-light text-burgundy">
-          The Eighteens
-        </h1>
-      </header>
+    <>
+      <SiteHeader current="court" />
 
-      {categories.length === 0 ? (
-        <p className="mt-16 text-center text-sm text-ink-muted">
-          The court will be announced soon.
-        </p>
-      ) : (
-        <CourtTabs court={court} categories={categories} />
-      )}
-    </main>
+      <main className="mx-auto max-w-3xl flex-1 px-6 py-24">
+        <header className="text-center">
+          <p className="text-[0.65rem] uppercase tracking-engraved text-gold">Her Court</p>
+          <h1 className="mt-3 font-display text-5xl font-light text-burgundy">
+            The Eighteens
+          </h1>
+        </header>
+
+        {categories.length === 0 ? (
+          <p className="mt-16 text-center text-sm text-ink-muted">
+            The court will be announced soon.
+          </p>
+        ) : (
+          <CourtTabs court={court} categories={categories} />
+        )}
+      </main>
+    </>
   );
 }

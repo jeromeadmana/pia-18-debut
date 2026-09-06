@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 /**
  * The operator dashboard.
@@ -120,9 +121,17 @@ export function AdminDashboard({
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-light text-burgundy">Admin</h1>
-        <LogoutButton />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="rounded-full border border-hairline px-4 py-2 text-xs uppercase tracking-wide text-ink-muted transition hover:border-gold"
+          >
+            View site
+          </Link>
+          <LogoutButton />
+        </div>
       </header>
 
       <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">

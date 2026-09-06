@@ -122,8 +122,20 @@ loops, not a distributed attacker.
 ### Images
 
 `next/image` delegates transforms to Cloudinary (`f_auto,q_auto`), which keeps
-the gallery off Vercel's image-optimization quota. Until `publicId` is filled in
-per image, files serve from `/public/gallery` with `unoptimized`.
+the gallery off Vercel's image-optimization quota. Measured: a 205 KB source
+serves as 23 KB WebP at display width.
+
+**The Cloudinary account is shared with other projects.** Everything this app
+writes lives under the `pia-18-debut/` folder, and that prefix is enforced in
+`lib/cloudinary.ts` rather than left as a naming convention — `scopedPublicId`
+throws on any ID that tries to climb out (`../other-project/logo`). There is
+deliberately **no delete helper anywhere in this codebase**: on a shared account
+an errant delete is unrecoverable, so the safest design is one that cannot
+express it. Remove assets from the Cloudinary console by hand.
+
+`pnpm cloudinary:upload` pushes `public/gallery/*` into that folder. It uses
+`overwrite: false`, so re-running reuses existing assets instead of clobbering
+them, and prints the public IDs to paste into `event.config.ts`.
 
 ---
 

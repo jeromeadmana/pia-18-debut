@@ -184,3 +184,47 @@ queries on the build machine. Two consequences for this project:
    and letting ISR heal it; every other error is rethrown.
 
 The distinction is `isConnectionError` — never a blanket `catch`.
+
+---
+
+### 14. A `loader` function cannot be passed from a Server Component
+
+**Anti-pattern:** `resolveImage()` returned `{ src, loader, unoptimized }` and a
+server-rendered page spread that onto `<Image>`. It worked only while `loader`
+was `undefined`. The moment Cloudinary was configured and a real function was
+returned, the build failed:
+
+```
+Error: Functions cannot be passed directly to Client Components
+  {src: ..., loader: function i, unoptimized: ...}
+```
+
+**Rule:** Nothing crossing the server/client boundary may be a function. For
+`next/image`, configure the loader globally instead:
+
+```ts
+// next.config.ts
+images: { loader: "custom", loaderFile: "./lib/image-loader.ts" }
+```
+
+Helpers that build props for client components should return **data only**.
+There is now a test asserting `resolveImage` returns no function values, because
+this failure only appears once a config value flips.
+
+---
+
+### 15. On a shared third-party account, scope in code — and omit destructive paths
+
+**Context:** The Cloudinary account is shared with other projects.
+
+**Rules applied here, worth repeating for any shared service:**
+
+- The folder prefix is enforced by `scopedPublicId`, which **throws** on any ID
+  containing `..`. Public IDs are path-like, so `../other-project/logo` would
+  otherwise read — or a future upload path overwrite — someone else's asset.
+  A naming convention is something a later edit forgets; a thrown error is not.
+- Uploads use `overwrite: false`, so re-running the script is a no-op rather
+  than a clobber.
+- **There is no delete helper anywhere in the codebase, deliberately.** An
+  errant delete on a shared account is unrecoverable, so the safest design is
+  one that cannot express it.

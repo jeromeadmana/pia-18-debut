@@ -189,18 +189,22 @@ export const event = {
    * Pre-debut photoshoot. `width`/`height` are the true pixel dimensions — they are
    * required so the browser reserves space and the gallery does not shift on load.
    *
-   * `publicId` is the Cloudinary public ID. While it is null the image is served
-   * from `/public/gallery` unoptimised; fill these in after uploading and the
-   * Cloudinary loader takes over automatically. See `lib/cloudinary.ts`.
+   * `publicId` is the Cloudinary public ID, stored WITHOUT the folder prefix —
+   * `scopedPublicId` in lib/cloudinary.ts adds `pia-18-debut/`, so the folder is
+   * defined in exactly one place. The account is shared with other projects, so
+   * that prefix is enforced in code rather than left to convention.
+   *
+   * `src` remains the local fallback: if Cloudinary is unconfigured the image
+   * still serves from /public/gallery. Regenerate IDs with `pnpm cloudinary:upload`.
    */
   gallery: [
-    { src: "/gallery/pia-01.jpg", publicId: null, width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-02.jpg", publicId: null, width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-03.jpg", publicId: null, width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-04.jpg", publicId: null, width: 2048, height: 1536, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-05.jpg", publicId: null, width: 2048, height: 1536, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-06.jpg", publicId: null, width: 1103, height: 2048, alt: "Pia, pre-debut portrait" },
-    { src: "/gallery/pia-07.jpg", publicId: null, width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-01.jpg", publicId: "pia-01", width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-02.jpg", publicId: "pia-02", width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-03.jpg", publicId: "pia-03", width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-04.jpg", publicId: "pia-04", width: 2048, height: 1536, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-05.jpg", publicId: "pia-05", width: 2048, height: 1536, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-06.jpg", publicId: "pia-06", width: 1103, height: 2048, alt: "Pia, pre-debut portrait" },
+    { src: "/gallery/pia-07.jpg", publicId: "pia-07", width: 1536, height: 2048, alt: "Pia, pre-debut portrait" },
   ] satisfies ReadonlyArray<{
     src: string;
     publicId: string | null;

@@ -27,12 +27,9 @@ import type { EventPhase } from "@/lib/phase";
 type Props = {
   phase: EventPhase;
   rsvpClosed: boolean;
-  /** Cover image, already resolved through the Cloudinary loader. */
-  cover: {
-    src: string;
-    loader?: (args: { src: string; width: number; quality?: number }) => string;
-    unoptimized?: boolean;
-  };
+  /** Cover image, already resolved. Data only — a loader function cannot cross
+      the server/client boundary, so the loader is global (next.config.ts). */
+  cover: { src: string; unoptimized?: boolean };
 };
 
 export function LuxuryHero({ phase, rsvpClosed, cover }: Props) {

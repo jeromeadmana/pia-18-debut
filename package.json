@@ -13,6 +13,7 @@
     "db:seed": "tsx --env-file=.env.local db/seed.ts",
     "db:latency": "tsx --env-file=.env.local scripts/db-latency.ts",
     "check:content": "tsx scripts/check-placeholders.ts",
+    "cloudinary:upload": "tsx --env-file=.env.local scripts/upload-gallery.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -36,6 +37,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cloudinary": "^2.11.0",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",

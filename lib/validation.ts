@@ -69,6 +69,11 @@ export const guestbookSubmissionSchema = z.object({
     ),
   /** Present when posting from an invite page; absent for an open message. */
   code: rsvpCodeSchema.optional(),
+  /**
+   * A note for Pia alone, left during RSVP. Excluded from the public wall
+   * regardless of moderation.
+   */
+  isPrivate: z.boolean().default(false),
 });
 
 export type RsvpSubmission = z.infer<typeof rsvpSubmissionSchema>;

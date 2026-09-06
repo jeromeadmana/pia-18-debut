@@ -149,13 +149,20 @@ export const guestbookMessages = pgTable(
      * defacement vector; nothing renders until it is reviewed.
      */
     isApproved: boolean("is_approved").notNull().default(false),
+    /**
+     * A note meant for Pia alone, left during RSVP. Private messages are
+     * excluded from the public wall *regardless of approval* — approval and
+     * privacy are separate axes, and conflating them is how a private note ends
+     * up published by a distracted moderator.
+     */
+    isPrivate: boolean("is_private").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
-    // Serves the only public query: approved messages, newest first.
-    index("guestbook_approved_created_idx").on(t.isApproved, t.createdAt.desc()),
+    // Serves the only public query: approved, non-private, newest first.
+    index("guestbook_public_idx").on(t.isApproved, t.isPrivate, t.createdAt.desc()),
   ],
 );
 

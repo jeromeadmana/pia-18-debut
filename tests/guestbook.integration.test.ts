@@ -84,6 +84,43 @@ describeDb("guestbook moderation", () => {
     expect(row.inviteId).not.toBeNull();
   });
 
+  it("keeps a PRIVATE note off the wall even when approved", async () => {
+    // The important one. Privacy and approval are separate axes; a moderator
+    // approving by reflex must not publish a note meant for Pia alone.
+    const marker = `private-${Date.now()}`;
+    const { id } = await createGuestbookMessage({
+      authorName: "Test Author",
+      body: marker,
+      isPrivate: true,
+    });
+    created.push(id);
+
+    await db
+      .update(guestbookMessages)
+      .set({ isApproved: true })
+      .where(eq(guestbookMessages.id, id));
+
+    const published = await listApprovedMessages(100);
+    expect(published.some((m) => m.body === marker)).toBe(false);
+  });
+
+  it("defaults isPrivate to false so ordinary wishes still publish", async () => {
+    const marker = `public-${Date.now()}`;
+    const { id } = await createGuestbookMessage({
+      authorName: "Test Author",
+      body: marker,
+    });
+    created.push(id);
+
+    await db
+      .update(guestbookMessages)
+      .set({ isApproved: true })
+      .where(eq(guestbookMessages.id, id));
+
+    const published = await listApprovedMessages(100);
+    expect(published.some((m) => m.body === marker)).toBe(true);
+  });
+
   it("still accepts a message when the code is unknown, but links nothing", async () => {
     // A wrong code must not cost someone their message.
     const { id } = await createGuestbookMessage({

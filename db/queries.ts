@@ -203,7 +203,14 @@ export type CourtEntry = {
   dedication: string | null;
 };
 
-/** Approved guestbook messages, newest first. Served by the composite index. */
+/**
+ * The public wall: approved AND not private, newest first. Served by
+ * `guestbook_public_idx`.
+ *
+ * Both conditions matter. A note left for Pia during RSVP must never surface
+ * here even if a moderator approves it by reflex — privacy is not a stricter
+ * kind of approval, it is a separate axis.
+ */
 export async function listApprovedMessages(limit = 50) {
   return withRetry(() =>
     db
@@ -214,7 +221,12 @@ export async function listApprovedMessages(limit = 50) {
         createdAt: guestbookMessages.createdAt,
       })
       .from(guestbookMessages)
-      .where(eq(guestbookMessages.isApproved, true))
+      .where(
+        and(
+          eq(guestbookMessages.isApproved, true),
+          eq(guestbookMessages.isPrivate, false),
+        ),
+      )
       .orderBy(desc(guestbookMessages.createdAt))
       .limit(limit),
   );
@@ -228,6 +240,8 @@ export async function createGuestbookMessage(input: {
   authorName: string;
   body: string;
   code?: string;
+  /** A note for Pia alone. Never reaches the public wall. */
+  isPrivate?: boolean;
 }): Promise<{ id: number }> {
   let inviteId: number | null = null;
 
@@ -243,6 +257,7 @@ export async function createGuestbookMessage(input: {
       body: input.body,
       inviteId,
       isApproved: false,
+      isPrivate: input.isPrivate ?? false,
     })
     .returning({ id: guestbookMessages.id });
 
@@ -338,6 +353,7 @@ export async function listMessagesForReview(limit = 100) {
         authorName: guestbookMessages.authorName,
         body: guestbookMessages.body,
         isApproved: guestbookMessages.isApproved,
+        isPrivate: guestbookMessages.isPrivate,
         createdAt: guestbookMessages.createdAt,
       })
       .from(guestbookMessages)

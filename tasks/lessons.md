@@ -145,3 +145,42 @@ database credentials that had just been fetched.
 **Rule:** When a tool generates a dotfile, later steps must **append** to it, not
 overwrite it. Read setup instructions in order, as a new contributor would, and
 ask what each step does to the state left by the previous one.
+
+---
+
+### 12. pnpm 11 fails the whole install on ANY unapproved build script
+
+**Anti-pattern:** Adding only the package that happened to complain locally
+(`esbuild`) to `allowBuilds`, and assuming that was the full list. The first
+Vercel deploy died on `ERR_PNPM_IGNORED_BUILDS: unrs-resolver@1.12.2` — a native
+resolver pulled in by `eslint-config-next`, whose postinstall is skipped on
+Windows and therefore never surfaced locally.
+
+**Rule:** `allowBuilds` is not "packages that warned on my machine", it is
+"every dependency in the tree with an install script". Enumerate them rather than
+waiting to be told, because the set is platform-dependent:
+
+```bash
+# list every package in the pnpm store with an install/postinstall script
+node -e "…scan node_modules/.pnpm/*/node_modules/*/package.json for scripts.{pre,post,}install…"
+```
+
+Then verify with a genuine clean install (`rm -rf node_modules && pnpm install
+--frozen-lockfile`), not an incremental one — an already-built store hides the
+failure.
+
+---
+
+### 13. Prerendered pages run their data fetches during `next build`
+
+**Rule:** Any page with `revalidate` (ISR) or static rendering executes its
+queries on the build machine. Two consequences for this project:
+
+1. Build-time env vars are required. `/court` fails the build without
+   `DATABASE_URL`, which is correct — a misconfiguration should be loud.
+2. A *transient* failure should not be loud. Neon's free tier suspends after
+   inactivity, so a cold compute during a deploy would otherwise fail the whole
+   build. `/court` now swallows connection errors only, serving the empty state
+   and letting ISR heal it; every other error is rethrown.
+
+The distinction is `isConnectionError` — never a blanket `catch`.

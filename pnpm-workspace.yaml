@@ -1,5 +1,13 @@
 # pnpm 11 moved build-script approval out of package.json into this file.
-# esbuild ships a platform binary via a postinstall script; vitest and drizzle-kit
-# both need it, so it is explicitly allowed to build.
+# Any dependency with an install/postinstall script must be listed here or
+# `pnpm install` exits 1 — which is how the first Vercel deploy failed.
+#
+# To find what needs listing after adding a dependency, look for
+# ERR_PNPM_IGNORED_BUILDS in the install output.
 allowBuilds:
+  # Platform binary for the bundler. vitest and drizzle-kit both need it.
   esbuild: true
+  # Native (napi) module resolver pulled in by eslint-config-next via
+  # eslint-plugin-import-x. Its postinstall is skipped on Windows, which is why
+  # this only surfaced on Vercel's Linux builder.
+  unrs-resolver: true

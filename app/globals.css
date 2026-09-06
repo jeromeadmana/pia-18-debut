@@ -218,3 +218,42 @@ body {
     display: none;
   }
 }
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Paper is a light medium. The obsidian card is correct on screen and ruinous
+ * on ink — several millilitres of black to print one pass — so print flips it to
+ * a light ground with a hairline rule, and drops the grain and ambient glow.
+ *
+ * `print-color-adjust: exact` is deliberately NOT set: we WANT the browser to
+ * drop the backgrounds here rather than honour them.
+ */
+@media print {
+  .grain::after {
+    display: none;
+  }
+
+  .surface-obsidian,
+  .surface-ivory {
+    --background: #ffffff;
+    --foreground: #111111;
+    --muted: #555555;
+    --hairline: #cccccc;
+    --accent: #7a5c1f;
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  .ambient-gold {
+    background-image: none !important;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+}

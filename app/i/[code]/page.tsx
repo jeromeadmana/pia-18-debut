@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getInviteByCode } from "@/db/queries";
 import { event } from "@/content/event.config";
-import { RsvpForm } from "@/components/RsvpForm";
+import { RsvpWizard } from "@/components/rsvp/RsvpWizard";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 import { isRsvpClosed } from "@/lib/phase";
 import { SiteHeader } from "@/components/SiteHeader";
 import { celebrantFullName, venueName, venueAddress } from "@/lib/content";
@@ -110,19 +111,24 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
           </section>
         )}
 
-        <RsvpForm
-          code={invite.rsvpCode}
-          maxSeats={invite.maxSeats}
-          hasResponded={invite.respondedAt !== null}
-          rsvpClosed={isRsvpClosed()}
-          guests={invite.guests.map((guest) => ({
-            id: guest.id,
-            fullName: guest.fullName,
-            rsvpStatus: guest.rsvpStatus,
-            dietaryNotes: guest.dietaryNotes,
-          }))}
-          existingSongs={invite.songRequests}
-        />
+        <MotionProvider>
+          <RsvpWizard
+            code={invite.rsvpCode}
+            maxSeats={invite.maxSeats}
+            hasResponded={invite.respondedAt !== null}
+            rsvpClosed={isRsvpClosed()}
+            // A party holding any court role is part of the ceremony, so the
+            // wizard shows them the formal attire guidance.
+            isEntourage={courtRoles.length > 0}
+            guests={invite.guests.map((guest) => ({
+              id: guest.id,
+              fullName: guest.fullName,
+              rsvpStatus: guest.rsvpStatus,
+              dietaryNotes: guest.dietaryNotes,
+            }))}
+            existingSongs={invite.songRequests}
+          />
+        </MotionProvider>
       </main>
     </>
   );

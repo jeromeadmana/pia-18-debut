@@ -92,6 +92,14 @@ export const event = {
         "evening in — we would much rather have you comfortable than formal. " +
         "The colours below are only a hint if you'd like one.",
     },
+    /**
+     * Colours to steer away from, shown explicitly rather than buried in prose.
+     * White and ivory read as competing with the debutante in photographs.
+     */
+    avoid: [
+      { name: "White", hex: "#ffffff" },
+      { name: "Ivory", hex: "#f5f1e8" },
+    ],
     /** Palette swatches for the mood board. Hex values render as chips. */
     palette: [
       { name: "Champagne", hex: "#E8D5B7" },
@@ -102,19 +110,31 @@ export const event = {
     ],
   },
 
-  /** Evening timeline. Times are display-only strings, not parsed. */
+  /**
+   * Evening timeline. Times are display-only strings, not parsed here — see
+   * `lib/phase.ts` for the parsing that drives the live view.
+   *
+   * `courtCategory` links a segment to its 18s group, so expanding "The 18
+   * Roses" on the programme can list the actual eighteen. Null means the
+   * segment has no roster to show.
+   */
   program: [
-    { time: "5:00 PM", title: "Guest Arrival & Cocktails", detail: "Registration and seating" },
-    { time: "6:00 PM", title: "Grand Entrance", detail: "Presentation of the debutante" },
-    { time: "6:20 PM", title: "Opening Prayer & Welcome", detail: null },
-    { time: "6:40 PM", title: "Dinner Is Served", detail: null },
-    { time: "7:30 PM", title: "The Cotillion Waltz", detail: "The debutante and her court" },
-    { time: "8:00 PM", title: "The 18 Roses", detail: "A dance with each of the eighteen" },
-    { time: "8:45 PM", title: "The 18 Candles", detail: "Eighteen wishes, eighteen flames" },
-    { time: "9:15 PM", title: "The 18 Treasures", detail: null },
-    { time: "9:45 PM", title: "Message of Thanks", detail: "From the debutante and her family" },
-    { time: "10:00 PM", title: "Open Dance Floor", detail: "The celebration continues" },
-  ],
+    { time: "5:00 PM", title: "Guest Arrival & Cocktails", detail: "Registration and seating", courtCategory: null },
+    { time: "6:00 PM", title: "Grand Entrance", detail: "Presentation of the debutante", courtCategory: null },
+    { time: "6:20 PM", title: "Opening Prayer & Welcome", detail: null, courtCategory: null },
+    { time: "6:40 PM", title: "Dinner Is Served", detail: null, courtCategory: null },
+    { time: "7:30 PM", title: "The Cotillion Waltz", detail: "The debutante and her court", courtCategory: "cotillion" },
+    { time: "8:00 PM", title: "The 18 Roses", detail: "A dance with each of the eighteen", courtCategory: "roses" },
+    { time: "8:45 PM", title: "The 18 Candles", detail: "Eighteen wishes, eighteen flames", courtCategory: "candles" },
+    { time: "9:15 PM", title: "The 18 Treasures", detail: null, courtCategory: "treasures" },
+    { time: "9:45 PM", title: "Message of Thanks", detail: "From the debutante and her family", courtCategory: null },
+    { time: "10:00 PM", title: "Open Dance Floor", detail: "The celebration continues", courtCategory: null },
+  ] satisfies ReadonlyArray<{
+    time: string;
+    title: string;
+    detail: string | null;
+    courtCategory: CourtCategory | null;
+  }>,
 
   /** Copy for each 18s group. The names themselves come from the database. */
   court: {

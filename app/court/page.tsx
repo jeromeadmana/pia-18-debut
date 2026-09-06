@@ -1,5 +1,4 @@
-import { listCourt } from "@/db/queries";
-import { isConnectionError } from "@/db/client";
+import { listCourtTolerant } from "@/db/queries";
 import { event, type CourtCategory } from "@/content/event.config";
 import { CourtTabs } from "@/components/CourtTabs";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -22,7 +21,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const revalidate = 300;
 
 export default async function CourtPage() {
-  const court = await loadCourt();
+  const court = await listCourtTolerant();
 
   // Preserve the ceremonial order from the config rather than whatever order the
   // database returns.
@@ -54,29 +53,3 @@ export default async function CourtPage() {
   );
 }
 
-/**
- * Load the court, tolerating a sleeping database.
- *
- * This page is prerendered, so a Neon free-tier compute that happens to be
- * suspended when a deploy runs would otherwise fail the entire build. A
- * transient connection failure degrades to the "announced soon" state instead,
- * and ISR replaces it with real data within the revalidate window.
- *
- * Only CONNECTION failures are swallowed. A genuine fault — a missing
- * DATABASE_URL, a bad query, a schema drift — is rethrown and fails the build,
- * which is what should happen to a misconfiguration.
- */
-async function loadCourt() {
-  try {
-    return await listCourt();
-  } catch (error) {
-    if (!isConnectionError(error)) throw error;
-
-    console.error(
-      "[court] database unreachable during render — serving the empty state; " +
-        "ISR will retry within the revalidate window.",
-      error,
-    );
-    return {} as Awaited<ReturnType<typeof listCourt>>;
-  }
-}

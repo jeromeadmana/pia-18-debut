@@ -6,6 +6,10 @@ import { Guestbook } from "@/components/Guestbook";
 import { LuxuryHero } from "@/components/hero/LuxuryHero";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { getEventPhase, isRsvpClosed } from "@/lib/phase";
+import { listCourtTolerant } from "@/db/queries";
+import { ProgramTimeline } from "@/components/program/ProgramTimeline";
+import { PaletteVisualiser } from "@/components/attire/PaletteVisualiser";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { hasVenueMap, venueAddress, venueName } from "@/lib/content";
 
 /**
@@ -26,31 +30,35 @@ import { hasVenueMap, venueAddress, venueName } from "@/lib/content";
  */
 export const revalidate = 900;
 
-export default function HomePage() {
+export default async function HomePage() {
   const phase = getEventPhase();
   const rsvpClosed = isRsvpClosed();
+
+  // The roster is public and small, and this page is ISR — one render every 15
+  // minutes serves every guest, so the programme can list the eighteens without
+  // a per-visitor query. Tolerant of a sleeping database (see the helper).
+  const court = await listCourtTolerant();
 
   return (
     <main className="flex-1">
       {phase === "event-day" && <TonightBanner />}
 
-      {/* MotionProvider is scoped to the hero rather than placed in the root
-          layout: /live must stay motion-free, and a layout-level provider would
-          ship the animation bundle to it. */}
+      {/* One MotionProvider for the page, not the root layout: /live must stay
+          motion-free, and a layout-level provider would ship the bundle to it. */}
       <MotionProvider>
         <LuxuryHero
           phase={phase}
           rsvpClosed={rsvpClosed}
           cover={resolveImage(event.gallery[0])}
         />
+        {phase === "past" && <ThankYou />}
+        <Program court={court} />
+        <Details />
+        <CourtTeaser />
+        <Gallery />
+        <Gifts />
+        <Guestbook />
       </MotionProvider>
-      {phase === "past" && <ThankYou />}
-      <Program />
-      <Details />
-      <CourtTeaser />
-      <Gallery />
-      <Gifts />
-      <Guestbook />
     </main>
   );
 }
@@ -75,10 +83,10 @@ function ThankYou() {
         <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
           With love
         </p>
-        <h2 className="mt-3 font-display text-4xl font-light text-burgundy">
+        <h2 className="mt-3 font-display text-4xl font-extralight tracking-tight text-foreground">
           Thank you for being there
         </h2>
-        <p className="mt-6 text-sm leading-relaxed text-ink-muted">
+        <p className="mt-6 text-sm leading-relaxed text-muted">
           Thank you for celebrating {event.celebrant.firstName}&apos;s eighteenth
           with her. The photographs and every wish left here are hers to keep.
         </p>
@@ -87,52 +95,45 @@ function ThankYou() {
   );
 }
 
-function Program() {
+function Program({ court }: { court: Awaited<ReturnType<typeof listCourtTolerant>> }) {
   return (
-    <section id="program" className="mx-auto max-w-2xl px-6 py-24">
-      <SectionHeading eyebrow="The Evening" title="Programme" />
-
-      <ol className="mt-12">
-        {event.program.map((item) => (
-          <li
-            key={item.title}
-            className="grid grid-cols-[5.5rem_1fr] gap-4 border-b border-hairline py-5 last:border-0"
-          >
-            <span className="pt-1 text-xs uppercase tracking-engraved text-accent tabular-nums">
-              {item.time}
-            </span>
-            <span>
-              <span className="font-display text-xl text-burgundy">{item.title}</span>
-              {item.detail && (
-                <span className="mt-1 block text-sm text-ink-muted">{item.detail}</span>
-              )}
-            </span>
-          </li>
-        ))}
-      </ol>
+    <section id="program" className="surface-ivory px-6 py-28">
+      <div className="mx-auto max-w-2xl">
+        <Reveal>
+          <SectionHeading eyebrow="The Evening" title="Programme" />
+          <p className="mt-4 text-center text-xs text-muted">
+            Tap a segment marked + to see who takes part.
+          </p>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <ProgramTimeline court={court} />
+        </Reveal>
+      </div>
     </section>
   );
 }
 
 function Details() {
   return (
-    <section className="border-y border-hairline bg-champagne/20 px-6 py-24">
-      <div className="mx-auto grid max-w-4xl gap-16 sm:grid-cols-2">
-        <div>
+    <section className="surface-obsidian ambient-gold px-6 py-28">
+      <div className="mx-auto grid max-w-5xl gap-16 sm:grid-cols-2">
+        <Reveal>
           <SectionHeading eyebrow="Where" title="The Venue" align="left" />
-          <p className="mt-6 font-display text-2xl text-burgundy">{venueName()}</p>
+          <p className="mt-6 font-display text-3xl font-light text-foreground">
+            {venueName()}
+          </p>
           {venueAddress() && (
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{venueAddress()}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{venueAddress()}</p>
           )}
-          <p className="mt-4 text-sm text-ink-muted">{event.venue.parkingNote}</p>
+          <p className="mt-4 text-sm text-muted">{event.venue.parkingNote}</p>
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-8 flex gap-3">
             {hasVenueMap() && (
               <a
                 href={event.venue.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-accent/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
+                className="rounded-full border border-gold/40 px-5 py-2 text-[0.65rem] uppercase tracking-engraved text-foreground transition hover:border-gold"
               >
                 Open in Maps
               </a>
@@ -142,54 +143,44 @@ function Details() {
                 href={event.venue.wazeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-accent/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
+                className="rounded-full border border-gold/40 px-5 py-2 text-[0.65rem] uppercase tracking-engraved text-foreground transition hover:border-gold"
               >
                 Waze
               </a>
             )}
           </div>
-        </div>
+        </Reveal>
 
-        <div>
+        <Reveal delay={0.12}>
           <SectionHeading eyebrow="What to Wear" title="Attire" align="left" />
 
-          {/* Guests first, deliberately. Most people reading this are not in the
-              entourage, and the headline for them is "relax". */}
+          {/* Guests first: most readers are not in the entourage, and their
+              headline is "relax". */}
           <div className="mt-6">
-            <p className="font-display text-xl text-burgundy">
+            <p className="font-display text-2xl text-foreground">
               {event.attire.guests.dressCode}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            <p className="mt-2 text-sm leading-relaxed text-muted">
               {event.attire.guests.guidance}
             </p>
           </div>
 
           <div className="mt-6 border-t border-hairline pt-6">
-            <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
+            <p className="text-[0.6rem] uppercase tracking-engraved text-accent">
               For the entourage
             </p>
-            <p className="mt-2 font-display text-xl text-burgundy">
+            <p className="mt-2 font-display text-2xl text-foreground">
               {event.attire.entourage.dressCode}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            <p className="mt-2 text-sm leading-relaxed text-muted">
               {event.attire.entourage.guidance}
             </p>
           </div>
 
-          <ul className="mt-8 flex flex-wrap gap-4">
-            {event.attire.palette.map((swatch) => (
-              <li key={swatch.name} className="flex flex-col items-center gap-2">
-                <span
-                  className="block h-12 w-12 rounded-full ring-1 ring-inset ring-black/10"
-                  style={{ backgroundColor: swatch.hex }}
-                />
-                <span className="text-[0.6rem] uppercase tracking-wide text-ink-muted">
-                  {swatch.name}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <div className="mt-8">
+            <PaletteVisualiser />
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -197,9 +188,10 @@ function Details() {
 
 function CourtTeaser() {
   return (
-    <section className="mx-auto max-w-2xl px-6 py-24 text-center">
+    <section className="surface-ivory px-6 py-28 text-center">
+      <div className="mx-auto max-w-2xl">
       <SectionHeading eyebrow="Her Court" title="The Eighteens" />
-      <p className="mt-6 text-sm leading-relaxed text-ink-muted">
+      <p className="mt-6 text-sm leading-relaxed text-muted">
         Eighteen roses, eighteen candles, eighteen treasures — the people who have
         shaped {event.celebrant.firstName}&apos;s first eighteen years.
       </p>
@@ -209,39 +201,51 @@ function CourtTeaser() {
       >
         See the court
       </Link>
+      </div>
     </section>
   );
 }
 
 function Gifts() {
   return (
-    <section className="mx-auto max-w-xl px-6 py-24 text-center">
-      <SectionHeading eyebrow="Gifts" title={event.gifts.heading} />
-      <p className="mt-6 text-sm leading-relaxed text-ink-muted">{event.gifts.body}</p>
+    <section className="surface-obsidian px-6 py-28 text-center">
+      <div className="mx-auto max-w-xl">
+        <SectionHeading eyebrow="Gifts" title={event.gifts.heading} />
+        <p className="mt-6 text-sm leading-relaxed text-muted">{event.gifts.body}</p>
+      </div>
     </section>
   );
 }
 
 function Gallery() {
   return (
-    <section id="gallery" className="mx-auto max-w-5xl px-6 py-24">
-      <SectionHeading eyebrow="Pre-Debut" title="The Photoshoot" />
+    <section id="gallery" className="surface-ivory px-6 py-28">
+      <div className="mx-auto max-w-5xl">
+        <Reveal>
+          <SectionHeading eyebrow="Pre-Debut" title="The Photoshoot" />
+        </Reveal>
 
-      <div className="mt-12 columns-2 gap-4 sm:columns-3 [&>*]:mb-4">
-        {event.gallery.map((entry) => {
-          const image = resolveImage(entry);
-          return (
-            <Image
-              key={entry.src}
-              {...image}
-              alt={entry.alt}
-              width={entry.width}
-              height={entry.height}
-              sizes="(max-width: 640px) 50vw, 33vw"
-              className="w-full rounded-sm"
-            />
-          );
-        })}
+        {/* Staggered so the grid assembles rather than snapping in at once. */}
+        <RevealGroup
+          stagger={0.06}
+          className="mt-12 columns-2 gap-4 sm:columns-3 [&>*]:mb-4"
+        >
+          {event.gallery.map((entry) => {
+            const image = resolveImage(entry);
+            return (
+              <RevealItem key={entry.src}>
+                <Image
+                  {...image}
+                  alt={entry.alt}
+                  width={entry.width}
+                  height={entry.height}
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  className="w-full rounded-sm"
+                />
+              </RevealItem>
+            );
+          })}
+        </RevealGroup>
       </div>
     </section>
   );
@@ -258,8 +262,8 @@ function SectionHeading({
 }) {
   return (
     <header className={align === "center" ? "text-center" : "text-left"}>
-      <p className="text-[0.65rem] uppercase tracking-engraved text-accent">{eyebrow}</p>
-      <h2 className="mt-3 font-display text-4xl font-light text-burgundy">{title}</h2>
+      <p className="text-[0.6rem] uppercase tracking-editorial text-accent">{eyebrow}</p>
+      <h2 className="mt-3 font-display text-4xl font-extralight tracking-tight text-foreground">{title}</h2>
     </header>
   );
 }

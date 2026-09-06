@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
-import { db, withRetry } from "./client";
+import { db, isConnectionError, withRetry } from "./client";
 import {
   courtRoles,
   guestbookMessages,
@@ -168,6 +168,33 @@ export async function listCourt(): Promise<Record<CourtCategory, CourtEntry[]>> 
     });
   }
   return grouped;
+}
+
+/**
+ * `listCourt`, but a sleeping database degrades to an empty court instead of
+ * failing the render.
+ *
+ * Both `/` and `/court` are prerendered, so they run this on the build machine.
+ * Neon's free tier suspends after inactivity and a cold compute during a deploy
+ * should not fail the build. ISR replaces the empty state within the revalidate
+ * window.
+ *
+ * Only CONNECTION failures are swallowed. A missing DATABASE_URL, a bad query or
+ * schema drift is rethrown, because a misconfiguration should be loud.
+ */
+export async function listCourtTolerant(): Promise<Record<CourtCategory, CourtEntry[]>> {
+  try {
+    return await listCourt();
+  } catch (error) {
+    if (!isConnectionError(error)) throw error;
+
+    console.error(
+      "[court] database unreachable during render — serving the empty state; " +
+        "ISR will retry within the revalidate window.",
+      error,
+    );
+    return {} as Record<CourtCategory, CourtEntry[]>;
+  }
 }
 
 export type CourtEntry = {

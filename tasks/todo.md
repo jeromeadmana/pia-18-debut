@@ -1,4 +1,7 @@
-# Pia 18th Debut — Passes 1–4
+# Pia 18th Debut — build log
+
+> **Picking this up again? Start with [RESUME.md](RESUME.md).** It has the
+> current state, the recommended next task, and the traps.
 
 Plan: `C:\Users\jerome\.claude\plans\typed-herding-codd.md`
 
@@ -178,9 +181,22 @@ table assignments restored.
 - [ ] Set `ADMIN_SESSION_SECRET` and `ADMIN_PASSWORD` in Vercel env vars
       (see `.env.example`; local values are already in `.env.local`)
 
+## Luxury editorial refactor — complete
+
+| Pass | Commit | Contents |
+|---|---|---|
+| A | `a88d819`, `932a354` | Dual-surface design system, editorial typography, obsidian hero with scoped motion |
+| B | `7ece46b` | Interactive programme, attire palette visualiser, alternating surfaces |
+| C | `145030c`, `f360587` | Note privacy split from moderation; four-step RSVP wizard; QR guest pass |
+| — | `5209d81` | Gallery on Cloudinary, confined to `pia-18-debut/` |
+| D | `17e573f` | Voice wishes + glass guestbook wall |
+
+Not built: **Pass E** (printable 4.75″×6.75″ insert) and **Pass F** (mocked
+outfit check). `?guest=NAME` was deliberately *not* built — it would make the
+guest list enumerable; personalisation reads from the DB via the private code.
+
 ## Next up
 
-- Gallery lightbox and an upload path for photographs taken on the night
-- Alternate hero treatments (minimalist typography, split gallery)
-- Shared-store rate limiting if the site is ever made public
-- Bulk invite import + code generation from a spreadsheet of real guests
+See [RESUME.md](RESUME.md). In short: **a guest list import tool** is the real
+gap — the database still holds only three hardcoded demo invites, so there is no
+way to load a real guest list. Then real content, then Pass E, then Pass F.

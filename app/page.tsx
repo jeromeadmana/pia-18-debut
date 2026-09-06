@@ -61,7 +61,7 @@ function ThankYou() {
   return (
     <section className="border-y border-hairline bg-champagne/25 px-6 py-20 text-center">
       <div className="mx-auto max-w-xl">
-        <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+        <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
           With love
         </p>
         <h2 className="mt-3 font-display text-4xl font-light text-burgundy">
@@ -103,11 +103,11 @@ function Hero({ phase, rsvpClosed }: { phase: EventPhase; rsvpClosed: boolean })
         </h1>
 
         <div className="flex items-center gap-4">
-          <span className="h-px w-12 bg-gold/40" />
+          <span className="h-px w-12 bg-accent/40" />
           <p className="font-display text-lg italic text-ink-muted">
             {event.celebrant.tagline}
           </p>
-          <span className="h-px w-12 bg-gold/40" />
+          <span className="h-px w-12 bg-accent/40" />
         </div>
 
         {phase !== "past" && <Countdown targetIso={event.date.iso} />}
@@ -143,7 +143,7 @@ function Hero({ phase, rsvpClosed }: { phase: EventPhase; rsvpClosed: boolean })
           )}
           <Link
             href="#program"
-            className="rounded-full border border-gold/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
+            className="rounded-full border border-accent/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
           >
             Dress Code &amp; Program
           </Link>
@@ -164,7 +164,7 @@ function Program() {
             key={item.title}
             className="grid grid-cols-[5.5rem_1fr] gap-4 border-b border-hairline py-5 last:border-0"
           >
-            <span className="pt-1 text-xs uppercase tracking-engraved text-gold tabular-nums">
+            <span className="pt-1 text-xs uppercase tracking-engraved text-accent tabular-nums">
               {item.time}
             </span>
             <span>
@@ -198,7 +198,7 @@ function Details() {
                 href={event.venue.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-gold/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
+                className="rounded-full border border-accent/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
               >
                 Open in Maps
               </a>
@@ -208,7 +208,7 @@ function Details() {
                 href={event.venue.wazeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-gold/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
+                className="rounded-full border border-accent/50 px-5 py-2 text-xs uppercase tracking-engraved text-burgundy transition hover:bg-champagne/50"
               >
                 Waze
               </a>
@@ -231,7 +231,7 @@ function Details() {
           </div>
 
           <div className="mt-6 border-t border-hairline pt-6">
-            <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+            <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
               For the entourage
             </p>
             <p className="mt-2 font-display text-xl text-burgundy">
@@ -271,7 +271,7 @@ function CourtTeaser() {
       </p>
       <Link
         href="/court"
-        className="mt-8 inline-block rounded-full border border-gold/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
+        className="mt-8 inline-block rounded-full border border-accent/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
       >
         See the court
       </Link>
@@ -324,7 +324,7 @@ function SectionHeading({
 }) {
   return (
     <header className={align === "center" ? "text-center" : "text-left"}>
-      <p className="text-[0.65rem] uppercase tracking-engraved text-gold">{eyebrow}</p>
+      <p className="text-[0.65rem] uppercase tracking-engraved text-accent">{eyebrow}</p>
       <h2 className="mt-3 font-display text-4xl font-light text-burgundy">{title}</h2>
     </header>
   );

@@ -28,7 +28,7 @@ export default function NotFound() {
       <SiteHeader />
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-24 text-center">
-        <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+        <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
           We couldn&apos;t find that
         </p>
 
@@ -50,7 +50,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/"
-            className="min-h-12 rounded-full border border-gold/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
+            className="min-h-12 rounded-full border border-accent/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
           >
             Back to the invitation
           </Link>

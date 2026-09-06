@@ -166,7 +166,7 @@ export function RsvpForm({
   return (
     <form onSubmit={handleSubmit} className="mt-12">
       <header className="flex items-baseline justify-between">
-        <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+        <h2 className="text-[0.65rem] uppercase tracking-engraved text-accent">
           {hasResponded ? "Update your reply" : "Kindly reply"}
         </h2>
         <p
@@ -206,7 +206,7 @@ export function RsvpForm({
                 maxLength={280}
                 placeholder="Any dietary needs? (optional)"
                 aria-label={`Dietary needs for ${guest.fullName}`}
-                className="mt-3 w-full rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+                className="mt-3 w-full rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
               />
             )}
           </li>
@@ -215,7 +215,7 @@ export function RsvpForm({
 
       {attendingCount > 0 && (
         <section className="mt-8">
-          <h3 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          <h3 className="text-[0.65rem] uppercase tracking-engraved text-accent">
             Request a song
           </h3>
           <p className="mt-2 text-xs text-ink-muted">
@@ -232,7 +232,7 @@ export function RsvpForm({
                   maxLength={120}
                   placeholder="Song title"
                   aria-label={`Song ${index + 1} title`}
-                  className="rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+                  className="rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
                 />
                 <input
                   type="text"
@@ -241,7 +241,7 @@ export function RsvpForm({
                   maxLength={120}
                   placeholder="Artist (optional)"
                   aria-label={`Song ${index + 1} artist`}
-                  className="rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+                  className="rounded-sm border border-hairline bg-white px-3 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
                 />
               </div>
             ))}
@@ -251,7 +251,7 @@ export function RsvpForm({
             <button
               type="button"
               onClick={() => setSongs((prev) => [...prev, { title: "", artist: "" }])}
-              className="mt-3 text-xs uppercase tracking-wide text-gold underline-offset-4 hover:underline"
+              className="mt-3 text-xs uppercase tracking-wide text-accent underline-offset-4 hover:underline"
             >
               + Add another
             </button>
@@ -301,7 +301,7 @@ function ChoiceButton({
       className={`min-h-11 rounded-sm border px-3 py-3 text-xs uppercase tracking-wide transition ${
         selected
           ? "border-burgundy bg-burgundy text-ivory"
-          : "border-hairline bg-white text-ink-muted hover:border-gold"
+          : "border-hairline bg-white text-ink-muted hover:border-accent"
       }`}
     >
       {children}
@@ -320,11 +320,11 @@ function Confirmation({
 }) {
   return (
     <section
-      className="mt-12 rounded-sm border border-gold/40 bg-champagne/25 px-6 py-10 text-center"
+      className="mt-12 rounded-sm border border-accent/40 bg-champagne/25 px-6 py-10 text-center"
       role="status"
       aria-live="polite"
     >
-      <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+      <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
         Your reply is recorded
       </p>
 
@@ -346,7 +346,7 @@ function Confirmation({
       <button
         type="button"
         onClick={onEdit}
-        className="mt-6 text-xs uppercase tracking-wide text-gold underline-offset-4 hover:underline"
+        className="mt-6 text-xs uppercase tracking-wide text-accent underline-offset-4 hover:underline"
       >
         Change your answer
       </button>
@@ -363,7 +363,7 @@ function ClosedSummary({
 }) {
   return (
     <section className="mt-12">
-      <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+      <h2 className="text-[0.65rem] uppercase tracking-engraved text-accent">
         Replies are closed
       </h2>
 

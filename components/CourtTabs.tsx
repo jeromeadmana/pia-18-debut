@@ -74,7 +74,7 @@ export function CourtTabs({ court, categories }: Props) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for your name…"
           autoComplete="off"
-          className="w-full rounded-full border border-hairline bg-white px-5 py-3 text-center text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+          className="w-full rounded-full border border-hairline bg-white px-5 py-3 text-center text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
         />
       </div>
 
@@ -130,7 +130,7 @@ export function CourtTabs({ court, categories }: Props) {
                   className={`min-h-11 rounded-full border px-5 py-2 text-xs uppercase tracking-wide transition ${
                     selected
                       ? "border-burgundy bg-burgundy text-ivory"
-                      : "border-hairline bg-white text-ink-muted hover:border-gold"
+                      : "border-hairline bg-white text-ink-muted hover:border-accent"
                   }`}
                 >
                   {event.court[category].label}
@@ -165,7 +165,7 @@ export function CourtTabs({ court, categories }: Props) {
 function CourtRow({ entry, highlight }: { entry: CourtEntry; highlight?: string }) {
   return (
     <li className="grid grid-cols-[2rem_1fr] items-baseline border-b border-hairline pb-3">
-      <span className="text-xs tabular-nums text-gold">
+      <span className="text-xs tabular-nums text-accent">
         {String(entry.position).padStart(2, "0")}
       </span>
       <span>

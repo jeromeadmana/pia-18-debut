@@ -1,20 +1,36 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist } from "next/font/google";
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import { event } from "@/content/event.config";
 import { celebrantFullName } from "@/lib/content";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * Two faces, doing two different jobs.
+ *
+ * Cormorant Garamond is a high-contrast display serif — thin strokes, sharp
+ * modulation. It only works at large sizes and light weights, which is exactly
+ * where it is used: the celebrant's name, section headings, numerals.
+ *
+ * Plus Jakarta Sans carries everything small. It replaces Geist because it holds
+ * its shape better at the 10–12px uppercase tracking this design leans on, which
+ * is most of the interface.
+ *
+ * Both are self-hosted and subsetted by `next/font`, so there is no third-party
+ * request and no layout shift from a late-arriving webfont.
+ */
+
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
 });
 
-/** Display face for the celebrant's name and section headings. */
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,11 +48,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${cormorant.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        {children}
-      </body>
+      {/*
+        `surface-ivory` is the default ground; obsidian sections opt in with
+        `surface-obsidian`. `grain` adds the fixed film-grain overlay via ::after.
+      */}
+      <body className="surface-ivory grain flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

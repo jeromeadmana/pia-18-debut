@@ -36,7 +36,7 @@ export default async function CourtPage() {
 
       <main className="mx-auto max-w-3xl flex-1 px-6 py-24">
         <header className="text-center">
-          <p className="text-[0.65rem] uppercase tracking-engraved text-gold">Her Court</p>
+          <p className="text-[0.65rem] uppercase tracking-engraved text-accent">Her Court</p>
           <h1 className="mt-3 font-display text-5xl font-light text-burgundy">
             The Eighteens
           </h1>

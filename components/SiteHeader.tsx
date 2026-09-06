@@ -30,7 +30,7 @@ export function SiteHeader({ current }: { current?: NavKey }) {
           className="group flex items-baseline gap-2"
           aria-label={`${event.celebrant.firstName}'s debut — home`}
         >
-          <span aria-hidden className="text-gold transition group-hover:-translate-x-0.5">
+          <span aria-hidden className="text-accent transition group-hover:-translate-x-0.5">
             &larr;
           </span>
           <span className="font-display text-lg text-burgundy">

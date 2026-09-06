@@ -69,7 +69,7 @@ export function LiveProgramme({ program }: { program: ProgramInstant[] }) {
             aria-current={isCurrent ? "step" : undefined}
             className={`rounded-sm border px-5 py-4 transition ${
               isCurrent
-                ? "border-gold bg-champagne/40"
+                ? "border-accent bg-champagne/40"
                 : isPast
                   ? "border-hairline bg-ivory opacity-50"
                   : "border-hairline bg-ivory"
@@ -79,7 +79,7 @@ export function LiveProgramme({ program }: { program: ProgramInstant[] }) {
               <span
                 className={`tabular-nums ${
                   isCurrent
-                    ? "text-xs uppercase tracking-engraved text-gold"
+                    ? "text-xs uppercase tracking-engraved text-accent"
                     : "text-xs uppercase tracking-engraved text-ink-muted"
                 }`}
               >

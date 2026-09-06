@@ -48,7 +48,7 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
 
       <main className="mx-auto max-w-xl flex-1 px-6 py-20">
         <header className="text-center">
-          <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
             You are invited
           </p>
           <h1 className="mt-4 font-display text-4xl font-light leading-tight text-burgundy">
@@ -95,8 +95,8 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
         </dl>
 
         {courtRoles.length > 0 && (
-          <section className="mt-10 rounded-sm border border-gold/40 bg-champagne/25 px-6 py-5 text-center">
-            <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          <section className="mt-10 rounded-sm border border-accent/40 bg-champagne/25 px-6 py-5 text-center">
+            <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
               A special role
             </p>
             {courtRoles.map((role) => (

@@ -126,7 +126,7 @@ export function AdminDashboard({
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="rounded-full border border-hairline px-4 py-2 text-xs uppercase tracking-wide text-ink-muted transition hover:border-gold"
+            className="rounded-full border border-hairline px-4 py-2 text-xs uppercase tracking-wide text-ink-muted transition hover:border-accent"
           >
             View site
           </Link>
@@ -147,7 +147,7 @@ export function AdminDashboard({
       <GuestSearch tables={tables} />
 
       <section className="mt-14">
-        <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+        <h2 className="text-[0.65rem] uppercase tracking-engraved text-accent">
           Guestbook queue
           {pendingMessages.length > 0 && (
             <span className="ml-2 rounded-full bg-burgundy px-2 py-0.5 text-ivory">
@@ -166,7 +166,7 @@ export function AdminDashboard({
                 className={`rounded-sm border px-5 py-4 ${
                   message.isApproved
                     ? "border-hairline bg-ivory"
-                    : "border-gold/50 bg-champagne/25"
+                    : "border-accent/50 bg-champagne/25"
                 }`}
               >
                 <p className="text-sm leading-relaxed text-ink">{message.body}</p>
@@ -180,7 +180,7 @@ export function AdminDashboard({
                       type="button"
                       disabled={busyId === message.id}
                       onClick={() => moderate(message.id, !message.isApproved)}
-                      className="rounded-full border border-gold/50 px-4 py-1.5 text-xs uppercase tracking-wide text-burgundy transition hover:bg-champagne/50 disabled:opacity-40"
+                      className="rounded-full border border-accent/50 px-4 py-1.5 text-xs uppercase tracking-wide text-burgundy transition hover:bg-champagne/50 disabled:opacity-40"
                     >
                       {message.isApproved ? "Unpublish" : "Approve"}
                     </button>
@@ -217,7 +217,7 @@ function Stat({
   return (
     <div
       className={`rounded-sm border px-4 py-4 ${
-        emphasis ? "border-gold/50 bg-champagne/30" : "border-hairline bg-ivory"
+        emphasis ? "border-accent/50 bg-champagne/30" : "border-hairline bg-ivory"
       }`}
     >
       <div className="font-display text-3xl font-light tabular-nums text-burgundy">
@@ -259,7 +259,7 @@ function GuestSearch({ tables }: { tables: TableRow[] }) {
 
   return (
     <section className="mt-14">
-      <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+      <h2 className="text-[0.65rem] uppercase tracking-engraved text-accent">
         Find a guest
       </h2>
 
@@ -269,7 +269,7 @@ function GuestSearch({ tables }: { tables: TableRow[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Name…"
-          className="flex-1 rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-gold"
+          className="flex-1 rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-accent"
         />
         <button
           type="submit"
@@ -336,7 +336,7 @@ function Seating({ invites, tables }: { invites: InviteRow[]; tables: TableRow[]
 
   return (
     <section className="mt-14">
-      <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">Seating</h2>
+      <h2 className="text-[0.65rem] uppercase tracking-engraved text-accent">Seating</h2>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {tables.map((table) => {
@@ -391,7 +391,7 @@ function Seating({ invites, tables }: { invites: InviteRow[]; tables: TableRow[]
                       assign(invite.id, e.target.value ? Number(e.target.value) : null)
                     }
                     aria-label={`Table for ${invite.partyName}`}
-                    className="rounded-sm border border-hairline bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-gold disabled:opacity-40"
+                    className="rounded-sm border border-hairline bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-accent disabled:opacity-40"
                   >
                     <option value="">Unassigned</option>
                     {tables.map((table) => (
@@ -421,7 +421,7 @@ function LogoutButton() {
         router.replace("/admin/login");
         router.refresh();
       }}
-      className="rounded-full border border-hairline px-4 py-2 text-xs uppercase tracking-wide text-ink-muted transition hover:border-gold"
+      className="rounded-full border border-hairline px-4 py-2 text-xs uppercase tracking-wide text-ink-muted transition hover:border-accent"
     >
       Sign out
     </button>

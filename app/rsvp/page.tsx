@@ -42,7 +42,7 @@ export default function RsvpLookupPage() {
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-24">
         <header className="text-center">
-          <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
             Kindly reply
           </p>
           <h1 className="mt-3 font-display text-4xl font-light text-burgundy">
@@ -75,7 +75,7 @@ export default function RsvpLookupPage() {
             placeholder="DEBUT2"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "code-error" : undefined}
-            className="w-full rounded-sm border border-hairline bg-white px-4 py-4 text-center font-display text-2xl uppercase tracking-engraved text-burgundy outline-none transition focus:border-gold"
+            className="w-full rounded-sm border border-hairline bg-white px-4 py-4 text-center font-display text-2xl uppercase tracking-engraved text-burgundy outline-none transition focus:border-accent"
           />
 
           {error && (

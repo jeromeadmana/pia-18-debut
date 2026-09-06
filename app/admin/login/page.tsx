@@ -78,7 +78,7 @@ function LoginForm() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-gold"
+          className="w-full rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-accent"
         />
 
         {error && (

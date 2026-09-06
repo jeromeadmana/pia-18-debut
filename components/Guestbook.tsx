@@ -98,7 +98,7 @@ export function Guestbook() {
     <section className="border-t border-hairline bg-champagne/20 px-6 py-24">
       <div className="mx-auto max-w-2xl">
         <header className="text-center">
-          <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
             Guestbook
           </p>
           <h2 className="mt-3 font-display text-4xl font-light text-burgundy">
@@ -110,7 +110,7 @@ export function Guestbook() {
         {posted ? (
           <p
             role="status"
-            className="mt-10 rounded-sm border border-gold/40 bg-ivory px-6 py-6 text-center text-sm text-burgundy"
+            className="mt-10 rounded-sm border border-accent/40 bg-ivory px-6 py-6 text-center text-sm text-burgundy"
           >
             Thank you — your wish has been sent.
             <span className="mt-1 block text-xs text-ink-muted">
@@ -119,7 +119,7 @@ export function Guestbook() {
             <button
               type="button"
               onClick={() => setPosted(false)}
-              className="mt-4 text-xs uppercase tracking-wide text-gold underline-offset-4 hover:underline"
+              className="mt-4 text-xs uppercase tracking-wide text-accent underline-offset-4 hover:underline"
             >
               Leave another
             </button>
@@ -136,7 +136,7 @@ export function Guestbook() {
               onChange={(e) => setAuthorName(e.target.value)}
               maxLength={80}
               placeholder="Your name"
-              className="w-full rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+              className="w-full rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
             />
 
             <label htmlFor="wish-body" className="sr-only">
@@ -149,7 +149,7 @@ export function Guestbook() {
               maxLength={event.guestbook.maxLength}
               rows={4}
               placeholder={`A wish for ${event.celebrant.firstName}…`}
-              className="mt-2 w-full resize-y rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-gold"
+              className="mt-2 w-full resize-y rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
             />
 
             <div className="mt-2 flex items-center justify-between">

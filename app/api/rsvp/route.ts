@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { submitRsvp } from "@/db/queries";
 import { rsvpSubmissionSchema } from "@/lib/validation";
 import { isConnectionError } from "@/db/client";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/rsvp — record a party's response.
@@ -14,6 +15,16 @@ export const maxDuration = 10;
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // A party may legitimately revise its answer a few times; 10 per minute is
+  // far above real use and well below anything that could hammer the database.
+  const limit = rateLimit(clientKey(request, "rsvp"), { limit: 10, windowMs: 60_000 });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, message: "That's a few too many attempts. Please wait a moment." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   let payload: unknown;
 
   try {

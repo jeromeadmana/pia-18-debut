@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createGuestbookMessage, listApprovedMessages } from "@/db/queries";
 import { guestbookSubmissionSchema } from "@/lib/validation";
 import { isConnectionError } from "@/db/client";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { event } from "@/content/event.config";
 
 export const maxDuration = 10;
@@ -28,6 +29,16 @@ export async function GET() {
  * "waiting to be added" rather than implying it is already live.
  */
 export async function POST(request: Request) {
+  // Tighter than RSVP: leaving a wish is a one-off, and this is the endpoint a
+  // bored guest would spam.
+  const limit = rateLimit(clientKey(request, "guestbook"), { limit: 5, windowMs: 60_000 });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, message: "Thanks for the enthusiasm — please wait a moment before posting again." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   let payload: unknown;
 
   try {

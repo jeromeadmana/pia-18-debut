@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getInviteByCode } from "@/db/queries";
 import { event } from "@/content/event.config";
 import { RsvpForm } from "@/components/RsvpForm";
+import { isRsvpClosed } from "@/lib/phase";
 
 /**
  * The private invite page.
@@ -98,6 +99,7 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
         code={invite.rsvpCode}
         maxSeats={invite.maxSeats}
         hasResponded={invite.respondedAt !== null}
+        rsvpClosed={isRsvpClosed()}
         guests={invite.guests.map((guest) => ({
           id: guest.id,
           fullName: guest.fullName,

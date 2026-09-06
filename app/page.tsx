@@ -4,6 +4,7 @@ import { event } from "@/content/event.config";
 import { Countdown } from "@/components/Countdown";
 import { resolveImage } from "@/lib/cloudinary";
 import { Guestbook } from "@/components/Guestbook";
+import { getEventPhase, isRsvpClosed, type EventPhase } from "@/lib/phase";
 
 /**
  * Home page — fully static.
@@ -14,14 +15,24 @@ import { Guestbook } from "@/components/Guestbook";
  * Hobby limits on the night.
  *
  * The guestbook is the one live element here. It fetches on the client, which
- * is what lets this page stay fully prerendered while the wishes wall stays
- * current.
+ * is what lets this page stay prerendered while the wishes wall stays current.
+ *
+ * Revalidating every 15 minutes rather than building once: the page reads the
+ * event phase, so a purely static render would still be advertising "confirm
+ * your RSVP" during the party. Four renders an hour is a rounding error against
+ * the Hobby budget and buys correctness at every phase boundary.
  */
+export const revalidate = 900;
 
 export default function HomePage() {
+  const phase = getEventPhase();
+  const rsvpClosed = isRsvpClosed();
+
   return (
     <main className="flex-1">
-      <Hero />
+      {phase === "event-day" && <TonightBanner />}
+      <Hero phase={phase} rsvpClosed={rsvpClosed} />
+      {phase === "past" && <ThankYou />}
       <Program />
       <Details />
       <CourtTeaser />
@@ -32,7 +43,39 @@ export default function HomePage() {
   );
 }
 
-function Hero() {
+function TonightBanner() {
+  return (
+    <div className="bg-burgundy px-6 py-3 text-center">
+      <Link
+        href="/live"
+        className="text-xs uppercase tracking-engraved text-ivory underline-offset-4 hover:underline"
+      >
+        Tonight&apos;s programme &amp; your table &rarr;
+      </Link>
+    </div>
+  );
+}
+
+function ThankYou() {
+  return (
+    <section className="border-y border-hairline bg-champagne/25 px-6 py-20 text-center">
+      <div className="mx-auto max-w-xl">
+        <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+          With love
+        </p>
+        <h2 className="mt-3 font-display text-4xl font-light text-burgundy">
+          Thank you for being there
+        </h2>
+        <p className="mt-6 text-sm leading-relaxed text-ink-muted">
+          Thank you for celebrating {event.celebrant.firstName}&apos;s eighteenth
+          with her. The photographs and every wish left here are hers to keep.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function Hero({ phase, rsvpClosed }: { phase: EventPhase; rsvpClosed: boolean }) {
   const cover = resolveImage(event.gallery[0]);
 
   return (
@@ -66,15 +109,37 @@ function Hero() {
           <span className="h-px w-12 bg-gold/40" />
         </div>
 
-        <Countdown targetIso={event.date.iso} />
+        {phase !== "past" && <Countdown targetIso={event.date.iso} />}
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/rsvp"
-            className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
-          >
-            Confirm RSVP
-          </Link>
+          {/* The primary action changes with the moment: reply, then find your
+              table on the night, then look back at the photographs. */}
+          {phase === "past" ? (
+            <Link
+              href="#gallery"
+              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
+            >
+              View the photographs
+            </Link>
+          ) : phase === "event-day" ? (
+            <Link
+              href="/live"
+              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
+            >
+              Tonight&apos;s programme
+            </Link>
+          ) : rsvpClosed ? (
+            <span className="rounded-full border border-hairline px-8 py-3 text-sm uppercase tracking-engraved text-ink-muted">
+              Replies are closed
+            </span>
+          ) : (
+            <Link
+              href="/rsvp"
+              className="rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink"
+            >
+              Confirm RSVP
+            </Link>
+          )}
           <Link
             href="#program"
             className="rounded-full border border-gold/50 px-8 py-3 text-sm uppercase tracking-engraved text-burgundy transition hover:bg-champagne/40"
@@ -200,7 +265,7 @@ function Gifts() {
 
 function Gallery() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-24">
+    <section id="gallery" className="mx-auto max-w-5xl px-6 py-24">
       <SectionHeading eyebrow="Pre-Debut" title="The Photoshoot" />
 
       <div className="mt-12 columns-2 gap-4 sm:columns-3 [&>*]:mb-4">

@@ -6,6 +6,7 @@ import {
   guestbookMessages,
   guests,
   invites,
+  seatingTables,
   songRequests,
 } from "./schema";
 import type { CourtCategory } from "./schema";
@@ -248,4 +249,143 @@ export async function searchGuestsByName(query: string, limit = 20) {
       .orderBy(asc(guests.fullName))
       .limit(limit),
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* ADMIN                                                                       */
+/*                                                                             */
+/* Everything below exposes guest PII and must only ever be reached through a   */
+/* route under /admin or /api/admin, which `middleware.ts` gates. None of it     */
+/* may be imported into a public page.                                          */
+/* -------------------------------------------------------------------------- */
+
+/** Headline RSVP numbers. One grouped scan, not five count queries. */
+export async function getRsvpSummary() {
+  const [statusRows, inviteRow, messageRow] = await Promise.all([
+    withRetry(() =>
+      db
+        .select({ status: guests.rsvpStatus, count: sql<number>`count(*)::int` })
+        .from(guests)
+        .groupBy(guests.rsvpStatus),
+    ),
+    withRetry(() =>
+      db
+        .select({
+          total: sql<number>`count(*)::int`,
+          responded: sql<number>`count(${invites.respondedAt})::int`,
+          seats: sql<number>`coalesce(sum(${invites.maxSeats}), 0)::int`,
+        })
+        .from(invites),
+    ),
+    withRetry(() =>
+      db
+        .select({
+          pending: sql<number>`count(*) filter (where ${guestbookMessages.isApproved} = false)::int`,
+          approved: sql<number>`count(*) filter (where ${guestbookMessages.isApproved} = true)::int`,
+        })
+        .from(guestbookMessages),
+    ),
+  ]);
+
+  const byStatus = Object.fromEntries(statusRows.map((r) => [r.status, r.count]));
+
+  return {
+    attending: byStatus.attending ?? 0,
+    declined: byStatus.declined ?? 0,
+    pending: byStatus.pending ?? 0,
+    invitesTotal: inviteRow[0]?.total ?? 0,
+    invitesResponded: inviteRow[0]?.responded ?? 0,
+    seatsAllocated: inviteRow[0]?.seats ?? 0,
+    messagesPending: messageRow[0]?.pending ?? 0,
+    messagesApproved: messageRow[0]?.approved ?? 0,
+  };
+}
+
+/** The moderation queue: unapproved first, oldest first so nothing rots. */
+export async function listMessagesForReview(limit = 100) {
+  return withRetry(() =>
+    db
+      .select({
+        id: guestbookMessages.id,
+        authorName: guestbookMessages.authorName,
+        body: guestbookMessages.body,
+        isApproved: guestbookMessages.isApproved,
+        createdAt: guestbookMessages.createdAt,
+      })
+      .from(guestbookMessages)
+      .orderBy(asc(guestbookMessages.isApproved), asc(guestbookMessages.createdAt))
+      .limit(limit),
+  );
+}
+
+export async function setMessageApproval(id: number, isApproved: boolean) {
+  const [row] = await db
+    .update(guestbookMessages)
+    .set({ isApproved })
+    .where(eq(guestbookMessages.id, id))
+    .returning({ id: guestbookMessages.id, isApproved: guestbookMessages.isApproved });
+
+  return row ?? null;
+}
+
+export async function deleteMessage(id: number) {
+  const [row] = await db
+    .delete(guestbookMessages)
+    .where(eq(guestbookMessages.id, id))
+    .returning({ id: guestbookMessages.id });
+
+  return row ?? null;
+}
+
+/** Every invite with its response tally, for the seating view. */
+export async function listInvitesForAdmin() {
+  return withRetry(() =>
+    db
+      .select({
+        id: invites.id,
+        rsvpCode: invites.rsvpCode,
+        partyName: invites.partyName,
+        maxSeats: invites.maxSeats,
+        tableId: invites.tableId,
+        tableName: seatingTables.name,
+        respondedAt: invites.respondedAt,
+        attending: sql<number>`count(*) filter (where ${guests.rsvpStatus} = 'attending')::int`,
+        declined: sql<number>`count(*) filter (where ${guests.rsvpStatus} = 'declined')::int`,
+        partySize: sql<number>`count(${guests.id})::int`,
+      })
+      .from(invites)
+      .leftJoin(guests, eq(guests.inviteId, invites.id))
+      .leftJoin(seatingTables, eq(invites.tableId, seatingTables.id))
+      .groupBy(invites.id, seatingTables.name)
+      .orderBy(asc(invites.partyName)),
+  );
+}
+
+export async function listSeatingTables() {
+  return withRetry(() =>
+    db
+      .select({
+        id: seatingTables.id,
+        name: seatingTables.name,
+        capacity: seatingTables.capacity,
+        locationNote: seatingTables.locationNote,
+        seated: sql<number>`(
+          select coalesce(sum(i.max_seats), 0)::int
+          from invites i where i.table_id = ${seatingTables.id}
+        )`,
+      })
+      .from(seatingTables)
+      .orderBy(asc(seatingTables.id)),
+  );
+}
+
+/** Move a party to a table, or clear the assignment with null. */
+export async function assignTable(inviteId: number, tableId: number | null) {
+  const [row] = await db
+    .update(invites)
+    .set({ tableId })
+    .where(eq(invites.id, inviteId))
+    .returning({ id: invites.id, tableId: invites.tableId });
+
+  return row ?? null;
 }

@@ -34,6 +34,7 @@ type Props = {
   code: string;
   maxSeats: number;
   hasResponded: boolean;
+  rsvpClosed: boolean;
   guests: GuestInput[];
   existingSongs: { id: number; title: string; artist: string | null }[];
 };
@@ -42,7 +43,14 @@ type SongDraft = { title: string; artist: string };
 
 const MAX_SONGS = 3;
 
-export function RsvpForm({ code, maxSeats, hasResponded, guests, existingSongs }: Props) {
+export function RsvpForm({
+  code,
+  maxSeats,
+  hasResponded,
+  rsvpClosed,
+  guests,
+  existingSongs,
+}: Props) {
   const router = useRouter();
 
   const [responses, setResponses] = useState<GuestInput[]>(guests);
@@ -142,6 +150,13 @@ export function RsvpForm({ code, maxSeats, hasResponded, guests, existingSongs }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Past the deadline the form is replaced entirely rather than disabled in
+  // place: a greyed-out form invites a guest to keep trying. This states what
+  // was recorded and who to talk to.
+  if (rsvpClosed) {
+    return <ClosedSummary guests={guests} hasResponded={hasResponded} />;
   }
 
   if (confirmed) {
@@ -335,6 +350,46 @@ function Confirmation({
       >
         Change your answer
       </button>
+    </section>
+  );
+}
+
+function ClosedSummary({
+  guests,
+  hasResponded,
+}: {
+  guests: GuestInput[];
+  hasResponded: boolean;
+}) {
+  return (
+    <section className="mt-12">
+      <h2 className="text-[0.65rem] uppercase tracking-engraved text-gold">
+        Replies are closed
+      </h2>
+
+      <ul className="mt-5 space-y-2">
+        {guests.map((guest) => (
+          <li
+            key={guest.id}
+            className="flex items-baseline justify-between border-b border-hairline pb-2 text-sm"
+          >
+            <span className="text-burgundy">{guest.fullName}</span>
+            <span className="text-[0.7rem] uppercase tracking-wide text-ink-muted">
+              {guest.rsvpStatus === "attending"
+                ? "Attending"
+                : guest.rsvpStatus === "declined"
+                  ? "Unable to join"
+                  : "No reply recorded"}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-6 text-xs leading-relaxed text-ink-muted">
+        {hasResponded
+          ? `To change anything now, please contact ${event.rsvp.contactName} at ${event.rsvp.contactPhone}.`
+          : `We didn't receive a reply for this invitation. If you can still join us, contact ${event.rsvp.contactName} at ${event.rsvp.contactPhone}.`}
+      </p>
     </section>
   );
 }

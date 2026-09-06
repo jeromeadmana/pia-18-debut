@@ -35,6 +35,11 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
     guest.courtRoles.map((role) => ({ guest: guest.fullName, ...role })),
   );
 
+  // Anyone on this invitation holding a court role makes the whole party part of
+  // the ceremony, so they see the formal guidance. Everyone else is told to come
+  // comfortable — which is the answer most guests actually want.
+  const attire = courtRoles.length > 0 ? event.attire.entourage : event.attire.guests;
+
   return (
     <main className="mx-auto max-w-xl flex-1 px-6 py-20">
       <header className="text-center">
@@ -61,7 +66,10 @@ export default async function InvitePage({ params }: PageProps<"/i/[code]">) {
           {event.venue.name}
           <span className="block text-ink-muted">{event.venue.address}</span>
         </Row>
-        <Row label="Attire">{event.attire.dressCode}</Row>
+        <Row label="Attire">
+          {attire.dressCode}
+          <span className="mt-1 block text-ink-muted">{attire.guidance}</span>
+        </Row>
         <Row label="Your table">
           {invite.table ? (
             <>

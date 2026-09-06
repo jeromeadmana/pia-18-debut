@@ -212,10 +212,30 @@ function Details() {
         </div>
 
         <div>
-          <SectionHeading eyebrow="What to Wear" title={event.attire.dressCode} align="left" />
-          <p className="mt-6 text-sm leading-relaxed text-ink-muted">
-            {event.attire.guidance}
-          </p>
+          <SectionHeading eyebrow="What to Wear" title="Attire" align="left" />
+
+          {/* Guests first, deliberately. Most people reading this are not in the
+              entourage, and the headline for them is "relax". */}
+          <div className="mt-6">
+            <p className="font-display text-xl text-burgundy">
+              {event.attire.guests.dressCode}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+              {event.attire.guests.guidance}
+            </p>
+          </div>
+
+          <div className="mt-6 border-t border-hairline pt-6">
+            <p className="text-[0.65rem] uppercase tracking-engraved text-gold">
+              For the entourage
+            </p>
+            <p className="mt-2 font-display text-xl text-burgundy">
+              {event.attire.entourage.dressCode}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+              {event.attire.entourage.guidance}
+            </p>
+          </div>
 
           <ul className="mt-8 flex flex-wrap gap-4">
             {event.attire.palette.map((swatch) => (

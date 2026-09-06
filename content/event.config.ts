@@ -23,8 +23,16 @@ export const event = {
     /** REPLACE_ME — full name as it should appear on the formal invitation. */
     fullName: "Pia REPLACE_ME",
     age: 18,
-    /** REPLACE_ME — the formal one-line tagline under the name. */
-    tagline: "A Debut Celebration",
+    /**
+     * The event title. Renders in italic directly beneath the celebrant's first
+     * name in the hero, so it reads as one line: "Pia / At Eighteen". Keep it
+     * short and avoid repeating the name.
+     *
+     * Alternatives, if you prefer: "Eighteen, In Bloom" (ties to the 18 Roses),
+     * "Her Golden Eighteen" (leans on the palette), "A Night in Bloom",
+     * or the traditional "The Debut of Pia".
+     */
+    tagline: "At Eighteen",
   },
 
   /**
@@ -61,11 +69,29 @@ export const event = {
     parkingNote: "Valet and self-parking are available on site.",
   },
 
+  /**
+   * Two dress codes, deliberately.
+   *
+   * The entourage is formal because they are part of the ceremony — the
+   * cotillion and the 18s are photographed as a set. Everyone else is asked to
+   * come comfortable. The invite page picks the right one per guest based on
+   * whether they hold a court role, so nobody has to work out which applies.
+   */
   attire: {
-    dressCode: "Formal / Black Tie",
-    /** Shown as the one-line rule guests actually need. */
-    guidance:
-      "Floor-length gowns and dark formal suits. We kindly ask guests to avoid white and ivory.",
+    entourage: {
+      dressCode: "Formal",
+      guidance:
+        "You are part of the ceremony, so we ask for formal dress: floor-length " +
+        "gowns and dark suits, ideally within the palette below. Please avoid " +
+        "white and ivory.",
+    },
+    guests: {
+      dressCode: "Come as you're comfortable",
+      guidance:
+        "There is no dress code for guests. Wear whatever you'll enjoy the " +
+        "evening in — we would much rather have you comfortable than formal. " +
+        "The colours below are only a hint if you'd like one.",
+    },
     /** Palette swatches for the mood board. Hex values render as chips. */
     palette: [
       { name: "Champagne", hex: "#E8D5B7" },

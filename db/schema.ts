@@ -156,6 +156,17 @@ export const guestbookMessages = pgTable(
      * up published by a distracted moderator.
      */
     isPrivate: boolean("is_private").notNull().default(false),
+    /**
+     * Cloudinary public ID of a recorded voice wish, WITHOUT the folder prefix
+     * (see lib/cloudinary.ts). Null for an ordinary written wish.
+     *
+     * The audio itself never touches Postgres — a blob column would bloat every
+     * row read on the hot path and blow past Neon's free-tier storage. This is a
+     * pointer; the bytes live in Cloudinary under pia-18-debut/wishes/.
+     */
+    audioPublicId: text("audio_public_id"),
+    /** Seconds, as reported by the recorder. Display only — never trusted. */
+    audioDurationSec: integer("audio_duration_sec"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -2,28 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { event } from "@/content/event.config";
+import { cn } from "@/lib/utils";
+import { AudioRecorder, type RecordedWish } from "./guestbook/AudioRecorder";
 
 /**
  * The wishes wall.
  *
- * Messages are fetched on the client rather than rendered on the server, which
- * is deliberate: it keeps the home page fully static (prerendered once, zero
- * serverless invocations for every guest who never scrolls this far), while the
- * wall itself stays live.
+ * Fetched on the client rather than server-rendered, which is deliberate: it
+ * keeps the home page fully prerendered — zero serverless invocations for every
+ * guest who never scrolls this far — while the wall itself stays live.
  *
- * Everything posted here lands unapproved — see `createGuestbookMessage`. The
- * copy says so plainly rather than implying the message is already public, so
- * nobody posts twice thinking it failed.
+ * Everything posted lands unapproved, written and spoken alike. The copy says so
+ * plainly rather than implying the message is already public, so nobody posts
+ * twice thinking it failed.
+ *
+ * Cards use the surface's own glass tokens, so the same component reads
+ * correctly on the obsidian ground it sits on here and on ivory if it moves.
  */
 
 type Message = {
   id: number;
   authorName: string;
   body: string;
+  audioPublicId: string | null;
+  audioDurationSec: number | null;
   createdAt: string;
 };
 
 type LoadState = "loading" | "ready" | "error";
+
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
+
+/** Mirrors `wishAudioUrl`; inlined so the client bundle skips the server module. */
+function audioUrl(publicId: string): string {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/pia-18-debut/wishes/${publicId}`;
+}
 
 export function Guestbook() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,6 +44,7 @@ export function Guestbook() {
 
   const [authorName, setAuthorName] = useState("");
   const [body, setBody] = useState("");
+  const [wish, setWish] = useState<RecordedWish | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
@@ -59,23 +73,26 @@ export function Guestbook() {
   }, []);
 
   const remaining = event.guestbook.maxLength - body.length;
+  const hasContent = body.trim().length > 0 || wish !== null;
 
   async function handleSubmit(formEvent: React.FormEvent) {
     formEvent.preventDefault();
     setError(null);
 
-    if (!authorName.trim() || !body.trim()) {
-      setError("Please add your name and a message.");
-      return;
-    }
+    if (!authorName.trim()) return setError("Please add your name.");
+    if (!hasContent) return setError("Please write a message or record a voice wish.");
 
     setSubmitting(true);
-
     try {
       const response = await fetch("/api/guestbook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authorName: authorName.trim(), body: body.trim() }),
+        body: JSON.stringify({
+          authorName: authorName.trim(),
+          body: body.trim(),
+          audioPublicId: wish?.publicId ?? null,
+          audioDurationSec: wish?.durationSec ?? null,
+        }),
       });
       const data = await response.json();
 
@@ -87,6 +104,7 @@ export function Guestbook() {
       setPosted(true);
       setAuthorName("");
       setBody("");
+      setWish(null);
     } catch {
       setError("We couldn't reach the server. Please check your connection.");
     } finally {
@@ -95,25 +113,25 @@ export function Guestbook() {
   }
 
   return (
-    <section className="border-t border-hairline bg-champagne/20 px-6 py-24">
+    <section className="surface-obsidian ambient-gold px-6 py-28">
       <div className="mx-auto max-w-2xl">
         <header className="text-center">
-          <p className="text-[0.65rem] uppercase tracking-engraved text-accent">
+          <p className="text-[0.6rem] uppercase tracking-editorial text-accent">
             Guestbook
           </p>
-          <h2 className="mt-3 font-display text-4xl font-light text-burgundy">
+          <h2 className="mt-3 font-display text-4xl font-extralight text-foreground">
             {event.guestbook.heading}
           </h2>
-          <p className="mt-3 text-sm text-ink-muted">{event.guestbook.prompt}</p>
+          <p className="mt-3 text-sm text-muted">{event.guestbook.prompt}</p>
         </header>
 
         {posted ? (
-          <p
+          <div
             role="status"
-            className="mt-10 rounded-sm border border-accent/40 bg-ivory px-6 py-6 text-center text-sm text-burgundy"
+            className="glass mt-10 rounded-sm px-6 py-8 text-center text-sm text-foreground"
           >
             Thank you — your wish has been sent.
-            <span className="mt-1 block text-xs text-ink-muted">
+            <span className="mt-1 block text-xs text-muted">
               {event.guestbook.moderationNotice}
             </span>
             <button
@@ -123,9 +141,9 @@ export function Guestbook() {
             >
               Leave another
             </button>
-          </p>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-10">
+          <form onSubmit={handleSubmit} className="glass mt-10 rounded-sm p-6">
             <label htmlFor="wish-name" className="sr-only">
               Your name
             </label>
@@ -136,7 +154,7 @@ export function Guestbook() {
               onChange={(e) => setAuthorName(e.target.value)}
               maxLength={80}
               placeholder="Your name"
-              className="w-full rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
+              className="w-full rounded-sm border border-hairline bg-transparent px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted/60 focus:border-accent"
             />
 
             <label htmlFor="wish-body" className="sr-only">
@@ -149,26 +167,41 @@ export function Guestbook() {
               maxLength={event.guestbook.maxLength}
               rows={4}
               placeholder={`A wish for ${event.celebrant.firstName}…`}
-              className="mt-2 w-full resize-y rounded-sm border border-hairline bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted/70 focus:border-accent"
+              className="mt-2 w-full resize-y rounded-sm border border-hairline bg-transparent px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted/60 focus:border-accent"
             />
 
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-ink-muted">
+              <span className="text-xs text-muted">
                 {event.guestbook.moderationNotice}
               </span>
               <span
-                className={`text-xs tabular-nums ${
-                  remaining < 40 ? "text-rose" : "text-ink-muted"
-                }`}
+                className={cn(
+                  "text-xs tabular-nums",
+                  remaining < 40 ? "text-rose" : "text-muted",
+                )}
               >
                 {remaining}
               </span>
             </div>
 
+            <div className="mt-5">
+              <AudioRecorder
+                disabled={submitting}
+                onRecorded={setWish}
+                onClear={() => setWish(null)}
+              />
+              {wish && (
+                <p className="mt-2 text-xs text-accent">
+                  Voice wish attached ({wish.durationSec}s). It will be sent with your
+                  message.
+                </p>
+              )}
+            </div>
+
             {error && (
               <p
                 role="alert"
-                className="mt-4 rounded-sm border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-burgundy"
+                className="mt-4 rounded-sm border border-rose/40 bg-rose/10 px-4 py-3 text-sm text-foreground"
               >
                 {error}
               </p>
@@ -177,40 +210,53 @@ export function Guestbook() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-5 min-h-12 w-full rounded-full bg-burgundy px-8 py-3 text-sm uppercase tracking-engraved text-ivory transition hover:bg-ink disabled:opacity-40"
+              className="mt-5 min-h-12 w-full rounded-full bg-gold px-8 py-3 text-xs uppercase tracking-engraved text-obsidian transition hover:bg-champagne disabled:opacity-40"
             >
               {submitting ? "Sending…" : "Leave a wish"}
             </button>
           </form>
         )}
 
-        <div className="mt-16 space-y-6">
+        <div className="mt-16 space-y-4">
           {loadState === "loading" && (
-            <p className="text-center text-xs text-ink-muted">Loading wishes…</p>
+            <p className="text-center text-xs text-muted">Loading wishes…</p>
           )}
-
           {loadState === "error" && (
-            <p className="text-center text-xs text-ink-muted">
+            <p className="text-center text-xs text-muted">
               The wishes couldn&apos;t be loaded just now.
             </p>
           )}
-
           {loadState === "ready" && messages.length === 0 && (
-            <p className="text-center text-xs text-ink-muted">
+            <p className="text-center text-xs text-muted">
               Be the first to leave a wish.
             </p>
           )}
 
           {messages.map((message) => (
-            <figure
-              key={message.id}
-              className="rounded-sm border border-hairline bg-ivory px-6 py-5"
-            >
-              <blockquote className="font-display text-lg italic leading-relaxed text-burgundy">
-                {message.body}
-              </blockquote>
-              <figcaption className="mt-3 text-[0.65rem] uppercase tracking-engraved text-ink-muted">
+            <figure key={message.id} className="glass rounded-sm px-6 py-5">
+              {message.body && (
+                <blockquote className="font-display text-lg italic leading-relaxed text-foreground">
+                  {message.body}
+                </blockquote>
+              )}
+
+              {message.audioPublicId && CLOUD_NAME && (
+                <div className={cn(message.body && "mt-4")}>
+                  <audio
+                    controls
+                    preload="none"
+                    src={audioUrl(message.audioPublicId)}
+                    className="h-9 w-full"
+                    aria-label={`Voice wish from ${message.authorName}`}
+                  />
+                </div>
+              )}
+
+              <figcaption className="mt-3 text-[0.6rem] uppercase tracking-editorial text-muted">
                 {message.authorName}
+                {message.audioPublicId && message.audioDurationSec
+                  ? ` · ${message.audioDurationSec}s voice wish`
+                  : ""}
               </figcaption>
             </figure>
           ))}

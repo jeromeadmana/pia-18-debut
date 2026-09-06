@@ -53,20 +53,46 @@ export const rsvpSubmissionSchema = z.object({
   songRequests: z.array(songRequestSchema).max(3, "Up to three songs, please.").default([]),
 });
 
-export const guestbookSubmissionSchema = z.object({
+const guestbookFields = z.object({
   authorName: z
     .string()
     .trim()
     .min(1, "Please tell Pia who this is from.")
     .max(80, "Please keep the name under 80 characters."),
+  /**
+   * Optional now that a wish can be audio instead. The `refine` below enforces
+   * that a submission carries *something*.
+   */
   body: z
     .string()
     .trim()
-    .min(1, "Your message is empty.")
     .max(
       event.guestbook.maxLength,
       `Please keep your message under ${event.guestbook.maxLength} characters.`,
-    ),
+    )
+    .default(""),
+  /**
+   * Cloudinary public ID of a recorded wish, without the folder prefix.
+   *
+   * The pattern is deliberately strict: these ids are generated server-side in
+   * `createUploadTicket`, so anything not matching that shape is a caller
+   * inventing a path — which on a shared Cloudinary account is how you end up
+   * pointing at somebody else's asset.
+   */
+  audioPublicId: z
+    .string()
+    .trim()
+    .regex(/^wish-[0-9a-f]{16}$/, "That recording reference isn't valid.")
+    .nullish()
+    .transform((v) => v ?? null),
+  /** Display only; never trusted for billing or limits. */
+  audioDurationSec: z
+    .number()
+    .int()
+    .min(0)
+    .max(120)
+    .nullish()
+    .transform((v) => v ?? null),
   /** Present when posting from an invite page; absent for an open message. */
   code: rsvpCodeSchema.optional(),
   /**
@@ -75,6 +101,12 @@ export const guestbookSubmissionSchema = z.object({
    */
   isPrivate: z.boolean().default(false),
 });
+
+/** A wish must carry something — written, spoken, or both. */
+export const guestbookSubmissionSchema = guestbookFields.refine(
+  (v) => v.body.trim().length > 0 || v.audioPublicId !== null,
+  { message: "Please write a message or record a voice wish.", path: ["body"] },
+);
 
 export type RsvpSubmission = z.infer<typeof rsvpSubmissionSchema>;
 export type GuestResponse = z.infer<typeof guestResponseSchema>;

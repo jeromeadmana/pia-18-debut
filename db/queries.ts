@@ -218,6 +218,8 @@ export async function listApprovedMessages(limit = 50) {
         id: guestbookMessages.id,
         authorName: guestbookMessages.authorName,
         body: guestbookMessages.body,
+        audioPublicId: guestbookMessages.audioPublicId,
+        audioDurationSec: guestbookMessages.audioDurationSec,
         createdAt: guestbookMessages.createdAt,
       })
       .from(guestbookMessages)
@@ -242,6 +244,9 @@ export async function createGuestbookMessage(input: {
   code?: string;
   /** A note for Pia alone. Never reaches the public wall. */
   isPrivate?: boolean;
+  /** Cloudinary public ID of a voice wish, without the folder prefix. */
+  audioPublicId?: string | null;
+  audioDurationSec?: number | null;
 }): Promise<{ id: number }> {
   let inviteId: number | null = null;
 
@@ -258,6 +263,8 @@ export async function createGuestbookMessage(input: {
       inviteId,
       isApproved: false,
       isPrivate: input.isPrivate ?? false,
+      audioPublicId: input.audioPublicId ?? null,
+      audioDurationSec: input.audioDurationSec ?? null,
     })
     .returning({ id: guestbookMessages.id });
 
@@ -354,6 +361,8 @@ export async function listMessagesForReview(limit = 100) {
         body: guestbookMessages.body,
         isApproved: guestbookMessages.isApproved,
         isPrivate: guestbookMessages.isPrivate,
+        audioPublicId: guestbookMessages.audioPublicId,
+        audioDurationSec: guestbookMessages.audioDurationSec,
         createdAt: guestbookMessages.createdAt,
       })
       .from(guestbookMessages)

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "seating_tables_name_uq" ON "seating_tables" USING btree ("name");

@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
+/**
+ * Design tokens.
+ *
+ * This palette is drawn from `event.attire.palette` in content/event.config.ts —
+ * the site and the dress code read as one thing.
+ *
+ * There is deliberately NO dark-mode variant. A formal invitation is a printed
+ * object with one correct appearance; inverting it to charcoal would read as a
+ * different, cheaper piece. The design commits to ivory-and-burgundy and paints
+ * every surface explicitly so it never borrows the host's theme.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ivory: #f5f1e8;
+  --champagne: #e8d5b7;
+  --rose: #c9a0a0;
+  --burgundy: #5c2a34;
+  --gold: #b08d57;
+
+  /* Derived neutrals — burgundy at reduced strength, so greys stay warm. */
+  --ink: #3a1b22;
+  --ink-muted: #7a5c62;
+  --hairline: #e0d5c4;
+
+  --background: var(--ivory);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ivory: var(--ivory);
+  --color-champagne: var(--champagne);
+  --color-rose: var(--rose);
+  --color-burgundy: var(--burgundy);
+  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+
+  --font-display: var(--font-cormorant);
+  --font-sans: var(--font-geist-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Display type: generous tracking is what makes a name read as engraved. */
+.font-display {
+  font-family: var(--font-cormorant), ui-serif, Georgia, serif;
+}
+
+.tracking-engraved {
+  letter-spacing: 0.18em;
+}
+
+/* Hairline rule used between program entries and section headers. */
+.rule-gold {
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+/* Respect users who have asked for less motion — entrance animations in pass 2
+   must all sit behind this. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

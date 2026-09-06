@@ -1,3 +1,5 @@
+# pnpm 11 moved build-script approval out of package.json into this file.
+# esbuild ships a platform binary via a postinstall script; vitest and drizzle-kit
+# both need it, so it is explicitly allowed to build.
 allowBuilds:
-  sharp: false
-  unrs-resolver: false
+  esbuild: true

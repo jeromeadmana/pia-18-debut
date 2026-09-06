@@ -1,0 +1,251 @@
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
+import { db, withRetry } from "./client";
+import {
+  courtRoles,
+  guestbookMessages,
+  guests,
+  invites,
+  songRequests,
+} from "./schema";
+import type { CourtCategory } from "./schema";
+import { normalizeRsvpCode, isValidRsvpCode } from "@/lib/codes";
+import { checkSeatLimit, type GuestResponse } from "@/lib/validation";
+
+/**
+ * All database access lives here. Route handlers and pages call these functions
+ * and never build queries inline, so the index-usage and scoping rules below
+ * hold everywhere by construction.
+ */
+
+export type InviteDetail = NonNullable<Awaited<ReturnType<typeof getInviteByCode>>>;
+
+/**
+ * Load everything an invite page needs in ONE round trip.
+ *
+ * Drizzle's relational API compiles this to a single query with lateral joins,
+ * which matters: on a cold Neon compute, one round trip costs ~1-2s and four
+ * would flirt with Vercel's 10s ceiling.
+ *
+ * Returns null for both "malformed code" and "no such code" — the caller must
+ * not be able to tell those apart, or the endpoint becomes a code oracle.
+ */
+export async function getInviteByCode(rawCode: string) {
+  const code = normalizeRsvpCode(rawCode);
+
+  // Cheap reject before spending a database round trip on an impossible code.
+  if (!isValidRsvpCode(code)) return null;
+
+  const invite = await withRetry(() =>
+    db.query.invites.findFirst({
+      where: eq(invites.rsvpCode, code),
+      with: {
+        table: true,
+        guests: {
+          orderBy: [desc(guests.isPrimary), asc(guests.id)],
+          with: {
+            courtRoles: {
+              columns: { category: true, position: true, displayName: true },
+            },
+          },
+        },
+        songRequests: {
+          columns: { id: true, title: true, artist: true },
+          orderBy: [asc(songRequests.id)],
+        },
+      },
+    }),
+  );
+
+  return invite ?? null;
+}
+
+export type RsvpResult =
+  | { ok: true; attending: number; declined: number }
+  | { ok: false; reason: "not_found" | "seat_limit" | "unknown_guest"; message: string };
+
+/**
+ * Record a party's RSVP.
+ *
+ * Two things worth knowing:
+ *
+ * 1. **No interactive transaction.** neon-http cannot do `db.transaction()`, so
+ *    every statement goes into a single `db.batch([...])`, which the driver
+ *    sends as one atomic unit — all of it lands or none of it does.
+ *
+ * 2. **Guest IDs are scoped to the invite, twice.** We reject IDs that do not
+ *    belong to this invite up front, AND every UPDATE carries
+ *    `invite_id = <this invite>` in its WHERE. Without that second guard, anyone
+ *    holding one valid code could rewrite any other guest's RSVP by passing a
+ *    guessed numeric id.
+ */
+export async function submitRsvp(
+  rawCode: string,
+  responses: readonly GuestResponse[],
+  songs: readonly { title: string; artist: string | null }[] = [],
+): Promise<RsvpResult> {
+  const invite = await getInviteByCode(rawCode);
+
+  if (!invite) {
+    return { ok: false, reason: "not_found", message: "We couldn't find that invitation." };
+  }
+
+  // Guard 1: every submitted id must belong to this invite.
+  const ownedIds = new Set(invite.guests.map((g) => g.id));
+  const foreign = responses.filter((r) => !ownedIds.has(r.guestId));
+  if (foreign.length > 0) {
+    return {
+      ok: false,
+      reason: "unknown_guest",
+      message: "That response included a guest who isn't on this invitation.",
+    };
+  }
+
+  const seats = checkSeatLimit(responses, invite.maxSeats);
+  if (!seats.ok) {
+    return { ok: false, reason: "seat_limit", message: seats.message };
+  }
+
+  const statements = [
+    ...responses.map((r) =>
+      db
+        .update(guests)
+        .set({ rsvpStatus: r.status, dietaryNotes: r.dietaryNotes })
+        // Guard 2: scope the write to this invite regardless of the id passed.
+        .where(and(eq(guests.id, r.guestId), eq(guests.inviteId, invite.id))),
+    ),
+    db
+      .update(invites)
+      .set({ respondedAt: new Date() })
+      .where(eq(invites.id, invite.id)),
+    ...songs.map((song) =>
+      db
+        .insert(songRequests)
+        .values({ inviteId: invite.id, title: song.title, artist: song.artist })
+        // Re-submitting the same RSVP must not pile up duplicate songs. The
+        // unique index on (invite_id, lower(title)) makes this a no-op.
+        .onConflictDoNothing(),
+    ),
+  ];
+
+  // `batch` wants a non-empty tuple; `statements` always has at least the
+  // invites UPDATE, so the assertion is safe.
+  await db.batch(statements as unknown as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+
+  return {
+    ok: true,
+    attending: responses.filter((r) => r.status === "attending").length,
+    declined: responses.filter((r) => r.status === "declined").length,
+  };
+}
+
+/**
+ * The public 18s court, grouped by category.
+ *
+ * Selects `displayName` only and never joins `guests`, so this endpoint cannot
+ * leak guest PII even though it is rendered on a fully public, cached page.
+ */
+export async function listCourt(): Promise<Record<CourtCategory, CourtEntry[]>> {
+  const rows = await withRetry(() =>
+    db
+      .select({
+        category: courtRoles.category,
+        position: courtRoles.position,
+        displayName: courtRoles.displayName,
+        dedication: courtRoles.dedication,
+      })
+      .from(courtRoles)
+      .orderBy(asc(courtRoles.category), asc(courtRoles.position)),
+  );
+
+  const grouped = {} as Record<CourtCategory, CourtEntry[]>;
+  for (const row of rows) {
+    (grouped[row.category] ??= []).push({
+      position: row.position,
+      displayName: row.displayName,
+      dedication: row.dedication,
+    });
+  }
+  return grouped;
+}
+
+export type CourtEntry = {
+  position: number;
+  displayName: string;
+  dedication: string | null;
+};
+
+/** Approved guestbook messages, newest first. Served by the composite index. */
+export async function listApprovedMessages(limit = 50) {
+  return withRetry(() =>
+    db
+      .select({
+        id: guestbookMessages.id,
+        authorName: guestbookMessages.authorName,
+        body: guestbookMessages.body,
+        createdAt: guestbookMessages.createdAt,
+      })
+      .from(guestbookMessages)
+      .where(eq(guestbookMessages.isApproved, true))
+      .orderBy(desc(guestbookMessages.createdAt))
+      .limit(limit),
+  );
+}
+
+/**
+ * Post a wish. Always lands unapproved — nothing reaches the public wall until
+ * a human reviews it.
+ */
+export async function createGuestbookMessage(input: {
+  authorName: string;
+  body: string;
+  code?: string;
+}): Promise<{ id: number }> {
+  let inviteId: number | null = null;
+
+  if (input.code) {
+    const invite = await getInviteByCode(input.code);
+    inviteId = invite?.id ?? null;
+  }
+
+  const [row] = await db
+    .insert(guestbookMessages)
+    .values({
+      authorName: input.authorName,
+      body: input.body,
+      inviteId,
+      isApproved: false,
+    })
+    .returning({ id: guestbookMessages.id });
+
+  return row;
+}
+
+/**
+ * ADMIN ONLY — case-insensitive guest search.
+ *
+ * Hits the `guests_full_name_lower_idx` expression index. This must never be
+ * exposed on a public route; it would make the entire guest list enumerable,
+ * which is precisely what the invite-code design exists to prevent.
+ */
+export async function searchGuestsByName(query: string, limit = 20) {
+  const term = query.trim().toLowerCase();
+  if (!term) return [];
+
+  return withRetry(() =>
+    db
+      .select({
+        guestId: guests.id,
+        fullName: guests.fullName,
+        rsvpStatus: guests.rsvpStatus,
+        partyName: invites.partyName,
+        rsvpCode: invites.rsvpCode,
+        tableId: invites.tableId,
+      })
+      .from(guests)
+      .innerJoin(invites, eq(guests.inviteId, invites.id))
+      .where(sql`lower(${guests.fullName}) LIKE ${`%${term}%`}`)
+      .orderBy(asc(guests.fullName))
+      .limit(limit),
+  );
+}
